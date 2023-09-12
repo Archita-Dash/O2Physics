@@ -8,4 +8,10 @@ Steps to download the Run3 data files could be found here: https://github.com/zc
 # How to run
 1. Enter O2Physics/latest environment
 2. bash <runscript.sh> <inputdata-file> <dpl-config.json>
+
+#How to run the full jet trigger task
+1. Enter O2Physics/latest environment
+2. bash runfulljet_script.sh AO2D.root dpl-config.json		// on my office desktop: cd /data/alice/fulljets
+3. The above cmd produces the AnalysisResults.root file		//Tried with the above AO2D.root file from LHC22m but somehow the "full-jet-filter" task is empty
+						// Markus suggested to try with a data set later than LHC22o since there were problems with "m" and "o" datasets
   
