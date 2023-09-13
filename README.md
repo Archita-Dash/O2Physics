@@ -7,6 +7,7 @@ Steps to download the Run3 data files could be found here: https://github.com/zc
 
 ##As mentioned below problems with the above AO2D file. On 13th Sept. 2023, I downloaded the following latest AO2D file from this year which is pass1
 /alice/data/2023/LHC23zk/539218/apass1/0210/o2_ctf_run00539218_orbit0056460544_tf0000000048_epn213/001
+//Sadly, this returns an empty fulljet trigger task as well. Need to look for another dataset!
 
 # How to run
 1. Enter O2Physics/latest environment
