@@ -9,9 +9,9 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-// fulljet spectra task with Run3 pp dataset
+/// fulljet spectra task with Run3 pp dataset
 
-// Author: Archita Rani Dash
+/// \author Archita Rani Dash (archita.rani.dash@cern.ch), University of Muenster
 
 #include <bitset>
 
@@ -42,22 +42,18 @@ using namespace o2::framework::expressions;
 
 struct fulljetppspectra {
   using selectedClusters = o2::soa::Filtered<o2::aod::EMCALClusters>;
-  //using filteredJets = o2::soa::Filtered<o2::aod::FullJets>;
-  using fullJetInfos = soa::Join<aod::FullJets, aod::FullJetConstituents>;
-  using neutralJetInfos = soa::Join<aod::NeutralJets, aod::NeutralJetConstituents>;
+  using fulljetsonly = soa::Join<aod::FullJets, aod::FullJetConstituents>;
+  using neutraljetsonly = soa::Join<aod::NeutralJets, aod::NeutralJetConstituents>;
+  using collisionWithTrigger = soa::Join<aod::Collisions, aod::EvSels, aod::FullJetFilters>::iterator;
 
   //Define histogram registries here
   HistogramRegistry registry{"registry",
-                            {{"h_jet_pt", "jet pT;#it{p}_{T,jet} (GeV/#it{c});entries", {HistType::kTH1F, {{100, 0., 50.}}}},
-                             {"h_jet_eta", "jet #eta;#eta_{jet};entries", {HistType::kTH1F, {{30, -1.5, 1.5}}}},
-                             {"h_jet_phi", "jet #phi;#phi_{jet};entries", {HistType::kTH1F, {{140, -7.0, 7.}}}},
-                             {"h_full_jet_pt", "jet pT;#it{p}_{T,jet} (GeV/#it{c});entries", {HistType::kTH1F, {{100, 0., 50.}}}},
+                            {{"h_full_jet_pt", "jet pT;#it{p}_{T,jet} (GeV/#it{c});entries", {HistType::kTH1F, {{100, 0., 50.}}}},
                              {"h_full_jet_eta", "jet #eta;#eta_{jet};entries", {HistType::kTH1F, {{30, -1.5, 1.5}}}},
                              {"h_full_jet_phi", "jet #phi;#phi{jet};entries", {HistType::kTH1F, {{140, -7.0, 7.}}}},
                              {"h_full_jet_ntracks", "jet N tracks;N_{jet tracks};entries", {HistType::kTH1F, {{40, -0.5, 39.5}}}},
                              {"h_full_jet_nclusters", "jet N clusters;N_{jet clusters};entries", {HistType::kTH1F, {{40, -0.5, 39.5}}}},
-                             {"h_full_jet_angularity", "jet angularity ;#lambda_{1};entries", {HistType::kTH1F, {{5, 0.0, 0.5}}}},
-                           }};
+                            }};
 
  //Define Configurables here
   Configurable<float> f_jetPtMin{"f_jetPtMin", 0.0, "minimum jet pT cut"};
@@ -79,21 +75,15 @@ struct fulljetppspectra {
 
   void init(InitContext const&) {}
 
-  void processDataFullSubstructure(soa::Filtered<soa::Join<aod::FullJets, aod::FullJetConstituents>>::iterator const& jet, aod::Tracks const& tracks) //EMCALClusters const& clusters)
-  {
+  void processFullJetSpectra(collisionWithTrigger const& collision, fulljetsonly const& jets , aod::Tracks const& tracks, selectedClusters const& clusters)
+  { //loop over the collisions with trigger once
+
     registry.fill(HIST("h_full_jet_pt"), jet.pt());
     registry.fill(HIST("h_full_jet_eta"), jet.eta());
     registry.fill(HIST("h_full_jet_phi"), jet.phi());
     registry.fill(HIST("h_full_jet_ntracks"), jet.tracks().size());
     registry.fill(HIST("h_full_jet_nclusters"), jet.clusters().size());
-    double angularity = 0.0;
-    for (auto& jetConstituent : jet.tracks_as<aod::Tracks>()) {
-      angularity += jetConstituent.pt() * TMath::Sqrt(TMath::Power(jetConstituent.phi() - jet.phi(), 2.0) + TMath::Power(jetConstituent.eta() - jet.eta(), 2.0));
-    }
-    // for (auto& jetConstituent : jet.clusters_as<aod::EMCALClusters>()) {
-    //   angularity += jetConstituent.energy() * TMath::Sqrt(TMath::Power(jetConstituent.phi() - jet.phi(), 2.0) + TMath::Power(jetConstituent.eta() - jet.eta(), 2.0));
-    // }
-    // registry.fill(HIST("h_full_jet_angularity"), angularity / (jet.pt() * jet.r() / 100.0));
+
   }
 
   PROCESS_SWITCH(fulljetppspectra, processDataFullSubstructure, "jet substructure full jets", false);
