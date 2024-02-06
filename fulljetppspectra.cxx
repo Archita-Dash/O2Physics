@@ -35,6 +35,7 @@
 #include "EventFiltering/filterTables.h"
 
 using namespace o2;
+using namespace o2::analysis;
 using namespace o2::framework;
 using namespace o2::framework::expressions;
 //using selectedClusters = o2::soa::Filtered<o2::aod::EMCALClusters>;
