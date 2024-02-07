@@ -7,9 +7,11 @@
         "start-value-enumeration": "0",
         "end-value-enumeration": "-1",
         "step-value-enumeration": "1",
-        "aod-file": "AO2D.root"
+        "aod-file": "\/home\/adash\/Downloads\/AO2D.root"
     },
     "internal-dpl-aod-spawner": "",
+    "bc-converter": "",
+    "internal-dpl-aod-index-builder": "",
     "timestamp-task": {
         "verbose": "false",
         "rct-path": "RCT\/Info\/RunInformation",
@@ -17,7 +19,14 @@
         "ccdb-url": "http:\/\/alice-ccdb.cern.ch",
         "isRun2MC": "false"
     },
-    "zdc-converter": "",
+    "tracks-extra-converter": "",
+    "bc-selection-task": {
+        "triggerBcShift": "999",
+        "ITSROFrameBorderMargin": "30",
+        "processRun2": "false",
+        "processRun3": "true"
+    },
+    "tracks-extra-spawner": "",
     "track-propagation": {
         "ccdb-url": "http:\/\/alice-ccdb.cern.ch",
         "lutPath": "GLO\/Param\/MatLUT",
@@ -25,41 +34,21 @@
         "grpmagPath": "GLO\/Config\/GRPMagField",
         "mVtxPath": "GLO\/Calib\/MeanVertex",
         "minPropagationDistance": "83.0999985",
+        "useTrackTuner": "false",
+        "trackTunerParams": "debugInfo=0|updateTrackCovMat=1|updateCurvature=0|updatePulls=0|isInputFileFromCCDB=1|pathInputFile=Users\/m\/mfaggin\/test\/inputsTrackTuner\/PbPb2022|nameInputFile=trackTuner_DataLHC22sPass5_McLHC22l1b2_run529397.root|usePvRefitCorrections=0|oneOverPtCurrent=0|oneOverPtUpgr=0",
         "processStandard": "true",
-        "processCovariance": "false"
+        "processStandardWithPID": "false",
+        "processCovarianceMc": "false",
+        "processCovarianceData": "false",
+        "processCovarianceWithPID": "false"
     },
-    "internal-dpl-aod-index-builder": "",
-    "bc-selection-task": {
-        "triggerBcShift": "999",
+    "event-selection-task": {
+        "syst": "pp",
+        "muonSelection": "0",
+        "customDeltaBC": "-1",
+        "isMC": "false",
         "processRun2": "false",
         "processRun3": "true"
-    },
-    "jet-matching-bplus-ch": {
-        "doMatchingGeo": "true",
-        "doMatchingPt": "true",
-        "doMatchingHf": "true",
-        "maxMatchingDistance": "0.400000006",
-        "minPtFraction": "0",
-        "processDummy": "true",
-        "processJets": "false"
-    },
-    "jet-matching-d0-ch": {
-        "doMatchingGeo": "true",
-        "doMatchingPt": "true",
-        "doMatchingHf": "true",
-        "maxMatchingDistance": "0.400000006",
-        "minPtFraction": "0",
-        "processDummy": "true",
-        "processJets": "false"
-    },
-    "jet-matching-lc-ch": {
-        "doMatchingGeo": "true",
-        "doMatchingPt": "true",
-        "doMatchingHf": "true",
-        "maxMatchingDistance": "0.400000006",
-        "minPtFraction": "0",
-        "processDummy": "true",
-        "processJets": "false"
     },
     "track-selection": {
         "isRun3": "true",
@@ -73,41 +62,6 @@
         "etaMin": "-0.800000012",
         "etaMax": "0.800000012"
     },
-    "pid-multiplicity": {
-        "processIU": "false",
-        "processStandard": "true"
-    },
-    "tpc-pid-full": {
-        "param-file": "",
-        "ccdb-url": "http:\/\/alice-ccdb.cern.ch",
-        "ccdbPath": "Analysis\/PID\/TPC\/Response",
-        "recoPass": "",
-        "ccdb-timestamp": "0",
-        "useNetworkCorrection": "false",
-        "autofetchNetworks": "true",
-        "skipTPCOnly": "false",
-        "networkPathLocally": "network.onnx",
-        "networkPathCCDB": "Analysis\/PID\/TPC\/ML",
-        "enableNetworkOptimizations": "true",
-        "networkSetNumThreads": "0",
-        "pid-el": "-1",
-        "pid-mu": "-1",
-        "pid-pi": "-1",
-        "pid-ka": "-1",
-        "pid-pr": "-1",
-        "pid-de": "-1",
-        "pid-tr": "-1",
-        "pid-he": "-1",
-        "pid-al": "-1"
-    },
-    "event-selection-task": {
-        "syst": "pp",
-        "muonSelection": "0",
-        "customDeltaBC": "-1",
-        "isMC": "false",
-        "processRun2": "false",
-        "processRun3": "true"
-    },
     "emcal-correction-task": {
         "selectedCellType": "1",
         "clusterDefinition": "kV3Default",
@@ -116,6 +70,12 @@
         "nonlinearityFunction": "DATA_TestbeamFinal",
         "disableNonLin": "false",
         "hasShaperCorrection": "true",
+        "applyCellAbsScale": "0",
+        "cellAbsScaleFactor": {
+            "values": [
+                "1"
+            ]
+        },
         "logWeight": "4.5",
         "exoticCellFraction": "0.970000029",
         "exoticCellDiffTime": "1000000",
@@ -127,8 +87,23 @@
         "processMCFull": "false",
         "processStandalone": "false"
     },
+    "jet-deriveddata-producer": {
+        "processBunchCrossings": "true",
+        "processCollisions": "true",
+        "processCollisionsWithCentrality": "false",
+        "processMcCollisionLabels": "false",
+        "processMcCollisions": "false",
+        "processTracks": "true",
+        "processMcTrackLabels": "false",
+        "processParticles": "false",
+        "processClusters": "true",
+        "processD0": "false",
+        "processD0MC": "false"
+    },
     "jet-finder-data-charged": {
         "vertexZCut": "10",
+        "centralityMin": "-999",
+        "centralityMax": "999",
         "trackPtMin": "0.150000006",
         "trackPtMax": "1000",
         "trackEtaMin": "-0.899999976",
@@ -161,10 +136,9 @@
         "jetGhostArea": "0.00499999989",
         "ghostRepeat": "1",
         "DoTriggering": "false",
-        "DoRhoAreaSub": "false",
-        "DoConstSub": "false",
         "processDummy": "true",
         "processChargedJets": "false",
+        "processChargedEvtWiseSubJets": "false",
         "processNeutralJets": "false",
         "processFullJets": "false",
         "processParticleLevelChargedJets": "false",
@@ -173,6 +147,8 @@
     },
     "jet-finder-data-full": {
         "vertexZCut": "10",
+        "centralityMin": "-999",
+        "centralityMax": "999",
         "trackPtMin": "0.150000006",
         "trackPtMax": "1000",
         "trackEtaMin": "-0.899999976",
@@ -205,10 +181,9 @@
         "jetGhostArea": "0.00499999989",
         "ghostRepeat": "1",
         "DoTriggering": "false",
-        "DoRhoAreaSub": "false",
-        "DoConstSub": "false",
         "processDummy": "false",
         "processChargedJets": "false",
+        "processChargedEvtWiseSubJets": "false",
         "processNeutralJets": "false",
         "processFullJets": "true",
         "processParticleLevelChargedJets": "false",
@@ -217,6 +192,8 @@
     },
     "jet-finder-data-neutral": {
         "vertexZCut": "10",
+        "centralityMin": "-999",
+        "centralityMax": "999",
         "trackPtMin": "0.150000006",
         "trackPtMax": "1000",
         "trackEtaMin": "-0.899999976",
@@ -249,10 +226,9 @@
         "jetGhostArea": "0.00499999989",
         "ghostRepeat": "1",
         "DoTriggering": "false",
-        "DoRhoAreaSub": "false",
-        "DoConstSub": "false",
         "processDummy": "true",
         "processChargedJets": "false",
+        "processChargedEvtWiseSubJets": "false",
         "processNeutralJets": "false",
         "processFullJets": "false",
         "processParticleLevelChargedJets": "false",
@@ -261,6 +237,8 @@
     },
     "jet-finder-mcd-charged": {
         "vertexZCut": "10",
+        "centralityMin": "-999",
+        "centralityMax": "999",
         "trackPtMin": "0.150000006",
         "trackPtMax": "1000",
         "trackEtaMin": "-0.899999976",
@@ -293,10 +271,9 @@
         "jetGhostArea": "0.00499999989",
         "ghostRepeat": "1",
         "DoTriggering": "false",
-        "DoRhoAreaSub": "false",
-        "DoConstSub": "false",
         "processDummy": "true",
         "processChargedJets": "false",
+        "processChargedEvtWiseSubJets": "false",
         "processNeutralJets": "false",
         "processFullJets": "false",
         "processParticleLevelChargedJets": "false",
@@ -305,6 +282,8 @@
     },
     "jet-finder-mcd-full": {
         "vertexZCut": "10",
+        "centralityMin": "-999",
+        "centralityMax": "999",
         "trackPtMin": "0.150000006",
         "trackPtMax": "1000",
         "trackEtaMin": "-0.899999976",
@@ -337,10 +316,9 @@
         "jetGhostArea": "0.00499999989",
         "ghostRepeat": "1",
         "DoTriggering": "false",
-        "DoRhoAreaSub": "false",
-        "DoConstSub": "false",
         "processDummy": "true",
         "processChargedJets": "false",
+        "processChargedEvtWiseSubJets": "false",
         "processNeutralJets": "false",
         "processFullJets": "false",
         "processParticleLevelChargedJets": "false",
@@ -349,6 +327,8 @@
     },
     "jet-finder-mcd-neutral": {
         "vertexZCut": "10",
+        "centralityMin": "-999",
+        "centralityMax": "999",
         "trackPtMin": "0.150000006",
         "trackPtMax": "1000",
         "trackEtaMin": "-0.899999976",
@@ -381,10 +361,9 @@
         "jetGhostArea": "0.00499999989",
         "ghostRepeat": "1",
         "DoTriggering": "false",
-        "DoRhoAreaSub": "false",
-        "DoConstSub": "false",
         "processDummy": "true",
         "processChargedJets": "false",
+        "processChargedEvtWiseSubJets": "false",
         "processNeutralJets": "false",
         "processFullJets": "false",
         "processParticleLevelChargedJets": "false",
@@ -393,6 +372,8 @@
     },
     "jet-finder-mcp-charged": {
         "vertexZCut": "10",
+        "centralityMin": "-999",
+        "centralityMax": "999",
         "trackPtMin": "0.150000006",
         "trackPtMax": "1000",
         "trackEtaMin": "-0.899999976",
@@ -425,10 +406,9 @@
         "jetGhostArea": "0.00499999989",
         "ghostRepeat": "1",
         "DoTriggering": "false",
-        "DoRhoAreaSub": "false",
-        "DoConstSub": "false",
         "processDummy": "true",
         "processChargedJets": "false",
+        "processChargedEvtWiseSubJets": "false",
         "processNeutralJets": "false",
         "processFullJets": "false",
         "processParticleLevelChargedJets": "false",
@@ -437,6 +417,8 @@
     },
     "jet-finder-mcp-full": {
         "vertexZCut": "10",
+        "centralityMin": "-999",
+        "centralityMax": "999",
         "trackPtMin": "0.150000006",
         "trackPtMax": "1000",
         "trackEtaMin": "-0.899999976",
@@ -469,10 +451,9 @@
         "jetGhostArea": "0.00499999989",
         "ghostRepeat": "1",
         "DoTriggering": "false",
-        "DoRhoAreaSub": "false",
-        "DoConstSub": "false",
         "processDummy": "true",
         "processChargedJets": "false",
+        "processChargedEvtWiseSubJets": "false",
         "processNeutralJets": "false",
         "processFullJets": "false",
         "processParticleLevelChargedJets": "false",
@@ -481,6 +462,8 @@
     },
     "jet-finder-mcp-neutral": {
         "vertexZCut": "10",
+        "centralityMin": "-999",
+        "centralityMax": "999",
         "trackPtMin": "0.150000006",
         "trackPtMax": "1000",
         "trackEtaMin": "-0.899999976",
@@ -513,10 +496,9 @@
         "jetGhostArea": "0.00499999989",
         "ghostRepeat": "1",
         "DoTriggering": "false",
-        "DoRhoAreaSub": "false",
-        "DoConstSub": "false",
         "processDummy": "true",
         "processChargedJets": "false",
+        "processChargedEvtWiseSubJets": "false",
         "processNeutralJets": "false",
         "processFullJets": "false",
         "processParticleLevelChargedJets": "false",
@@ -557,51 +539,36 @@
         "processFullJetTrigger": "true",
         "processNeutralJetTrigger": "false"
     },
-    "jet-filter": {
-        "selectionJetChHighPt": "33",
-        "cfgJetR": "0.600000024",
-        "cfgJetPtMin": "0.100000001"
-    },
-    "jet-matching-ch": {
-        "doMatchingGeo": "true",
-        "doMatchingPt": "true",
-        "doMatchingHf": "true",
-        "maxMatchingDistance": "0.400000006",
-        "minPtFraction": "0",
-        "processDummy": "true",
-        "processJets": "false"
-    },
-    "jet-full-trigger-qa": {
-        "f_jetPtMin": "0",
-        "f_SD_zCut": "0.100000001",
-        "f_SD_beta": "0",
-        "f_jetR": "0.400000006",
-        "f_PhiEmcalOrDcal": "4",
-        "f_minClusterTime": "-999",
-        "f_maxClusterTime": "999",
-        "f_ang_kappa": {
-            "values": [
-                "1",
-                "1",
-                "2"
-            ]
-        },
-        "f_ang_alpha": {
-            "values": [
-                "1",
-                "2",
-                "1"
-            ]
-        },
-        "b_JetsInEmcalOnly": "true",
-        "b_IgnoreEmcalFlag": "false",
-        "b_DoFiducialCut": "false",
-        "b_RejectExoticClusters": "true",
-        "f_gammaObservable": "1",
-        "cfgVertexCut": "10",
+    "full-jet-spectra-pp": {
+        "VertexZCut": "10",
+        "JetRadii": "0.40000000000000002",
+        "jetpTMin": "0",
+        "jetpTMax": "350",
+        "jetEtaMin": "-1",
+        "jetEtaMax": "1",
+        "jetPhiMin": "0",
+        "jetPhiMax": "7",
+        "trackpTMin": "0",
+        "trackpTMax": "200",
+        "trackEtaMin": "-1",
+        "trackEtaMax": "1",
+        "trackPhiMin": "0",
+        "trackPhiMax": "7",
+        "trackSelections": "globalTracks",
+        "eventSelections": "sel8",
+        "particleSelections": "PhysicalPrimary",
         "clusterDefinition": "kV3Default",
-        "processFullJets": "true",
-        "processNeutralJets": "false"
+        "clusterEtaMin": "-0.699999988",
+        "clusterEtaMax": "0.699999988",
+        "clusterPhiMin": "-999",
+        "clusterPhiMax": "999",
+        "clusterEnergyMin": "0.5",
+        "clusterTimeMin": "-999",
+        "clusterTimeMax": "999",
+        "clusterRejectExotics": "true",
+        "processDummy": "false",
+        "processJetsData": "true",
+        "processTracks": "true"
     },
     "internal-dpl-aod-writer": "",
     "internal-dpl-aod-global-analysis-file-sink": "",

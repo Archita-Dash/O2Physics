@@ -1,0 +1,87 @@
+digraph {
+  node [shape=box, fontname=Courier, fontsize=20]
+  ranksep=2 // vertical node separation
+  subgraph workflows {
+    node [fillcolor=papayawhip,style="filled,rounded"]
+    o2_analysis_je_full_jet_spectra_pp [label="o2-analysis-je-full-jet-spectra-pp"]
+    o2_analysis_je_jet_finder [label="o2-analysis-je-jet-finder"]
+    o2_analysis_je_jet_deriveddata_producer [label="o2-analysis-je-jet-deriveddata-producer"]
+  }
+  subgraph tables {
+    node [fillcolor=lightgrey,style=filled]
+    FJET
+    FJETC
+    JClusters
+    JCollisions
+    JTracks
+    JMcCollisions
+    JMcParticles
+    JTrackSubs
+    CJET
+    CJETC
+    CJETEWS
+    CJETEWSC
+    FJETEWS
+    FJETEWSC
+    NJET
+    NJETC
+    NJETEWS
+    NJETEWSC
+    CDJET
+    CDJETC
+    CDJETEWS
+    CDJETEWSC
+    FDJET
+    FDJETC
+    FDJETEWS
+    FDJETEWSC
+    NDJET
+    NDJETC
+    NDJETEWS
+    NDJETEWSC
+    CPJET
+    CPJETC
+    CPJETEWS
+    CPJETEWSC
+    FPJET
+    FPJETC
+    FPJETEWS
+    FPJETEWSC
+    NPJET
+    NPJETC
+    NPJETEWS
+    NPJETEWSC
+    BC
+    CALO
+    CENTFT0C
+    COLLISION
+    EMCALCLUSTERS
+    EMCCLUSCELLS
+    EMCMATCHTRACKS
+    EVSEL
+    HFD0ID
+    HFD0PID
+    MCCOLLISION
+    MCCOLLISLABEL
+    MCPARTICLE
+    MCTRACKLABEL
+    TIMESTAMPS
+    TRACK
+    TRACKSELECTION
+    JBCPIs
+    JBCs
+    JClusterPIs
+    JClusterTracks
+    JCollisionBcs
+    JCollisionPIs
+    JDummys
+    JMcCollisionLbs
+    JMcCollisionPIs
+    JMcParticlePIs
+    JMcTrackLbs
+    JTrackPIs
+  }
+  {FJET FJETC JClusters JCollisions JTracks} -> o2_analysis_je_full_jet_spectra_pp -> {}
+  {JClusters JCollisions JMcCollisions JMcParticles JTrackSubs JTracks} -> o2_analysis_je_jet_finder -> {CJET CJETC CJETEWS CJETEWSC FJET FJETC FJETEWS FJETEWSC NJET NJETC NJETEWS NJETEWSC CDJET CDJETC CDJETEWS CDJETEWSC FDJET FDJETC FDJETEWS FDJETEWSC NDJET NDJETC NDJETEWS NDJETEWSC CPJET CPJETC CPJETEWS CPJETEWSC FPJET FPJETC FPJETEWS FPJETEWSC NPJET NPJETC NPJETEWS NPJETEWSC}
+  {BC CALO CENTFT0C COLLISION EMCALCLUSTERS EMCCLUSCELLS EMCMATCHTRACKS EVSEL HFD0ID HFD0PID MCCOLLISION MCCOLLISLABEL MCPARTICLE MCTRACKLABEL TIMESTAMPS TRACK TRACKSELECTION} -> o2_analysis_je_jet_deriveddata_producer -> {JBCPIs JBCs JClusterPIs JClusterTracks JClusters JCollisionBcs JCollisionPIs JCollisions JDummys JMcCollisionLbs JMcCollisionPIs JMcCollisions JMcParticlePIs JMcParticles JMcTrackLbs JTrackPIs JTracks}
+}
