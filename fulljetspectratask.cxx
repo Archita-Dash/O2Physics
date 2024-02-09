@@ -9,12 +9,15 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-// FullJet Spectra in pp
-//
+// **FullJet Spectra in pp**
+// TO DO :
+// HADRONIC CORRECTION OF CLUSTERS
 /// \author Archita Rani Dash <archita.rani.dash@cern.ch>
 #include <vector>
 #include <iostream>
 #include <utility>
+#include <cmath>
+#include <TRandom3.h>
 
 #include "CommonConstants/PhysicsConstants.h"
 #include "Framework/ASoA.h"
@@ -55,7 +58,8 @@ struct FullJetSpectraTask {
   Configurable<float> VertexZCut{"VertexZCut", 10.0f, "Accepted z-vertex range"};
 
   //Jet configurables
-  Configurable<double> JetRadii{"JetRadii", 0.4, "jet resolution parameters"};
+  Configurable<float> JetRadii{"JetRadii", 0.4, "jet resolution parameters for histograms without radius"};
+  Configurable<std::vector<double>> jetradii{"jetradii", std::vector<double>{0.4}, "jet resolution parameters"};
   Configurable<float> jetpTMin{"jetpTMin", 0., "minimum jet pT"};
   Configurable<float> jetpTMax{"jetpTMax", 350., "maximum jet pT"};
   Configurable<float> jetEtaMin{"jetEtaMin", -1.0, "minimum jet eta"};
@@ -87,15 +91,15 @@ struct FullJetSpectraTask {
 
   int trackSelection = -1;
   int eventSelection = -1;
-  std::string particleSelection;
+  //std::string particleSelection;
 
   void init(o2::framework::InitContext&)
   {
     trackSelection = jetderiveddatautilities::initialiseTrackSelection(static_cast<std::string>(trackSelections));
     eventSelection = jetderiveddatautilities::initialiseEventSelection(static_cast<std::string>(eventSelections));
-    particleSelection = static_cast<std::string>(particleSelections);
+    //particleSelection = static_cast<std::string>(particleSelections);
 
-  //JetTrack QA histograms
+  //Track QA histograms
   if (doprocessTracks)  {
   registry.add("h_collisions", "event status; event status;entries", {HistType::kTH1F, {{4, 0., 4.0}}});
   registry.add("h_track_pt", "track pT;#it{p}_{T,track} (GeV/#it{c});entries", {HistType::kTH1F, {{350, 0., 350.}}});
@@ -106,14 +110,35 @@ struct FullJetSpectraTask {
   registry.add("h_cluster_pt", "cluster pT;#it{p}_{T_cluster} (GeV/#it{c});entries", {HistType::kTH1F, {{200, 0., 200.}}});
   registry.add("h_cluster_eta", "cluster #eta;#eta_{cluster};entries", {HistType::kTH1F, {{100, -1., 1.}}});
   registry.add("h_cluster_phi", "cluster #varphi;#varphi_{cluster};entries", {HistType::kTH1F, {{160, 0., 7.}}});
-  registry.add("h_cluster_energy", "cluster #varphi;#varphi_{cluster};entries", {HistType::kTH1F, {{160, 0., 7.}}});
+  registry.add("h_cluster_energy", "Cluster Energy Spectrum;E_{cluster} (GeV);entries", {HistType::kTH1F, {{160, 0., 7.}}});
   }
 
   //Jet QA histograms
   if (doprocessJetsData)  {
-  registry.add("h_full_jet_pt", "jet pT;#it{p}_{T_jet} (GeV/#it{c});entries", {HistType::kTH1F, {{350, 0., 350.}}});
-  registry.add("h_full_jet_eta", "jet #eta;#eta_{jet};entries", {HistType::kTH1F, {{100, -1., 1.}}});
-  registry.add("h_full_jet_phi", "jet #varphi;#varphi_{jet};entries", {HistType::kTH1F, {{160, 0., 7.}}});
+  registry.add("h_fulljet_pt", "FullJet pT;#it{p}_{T_jet} (GeV/#it{c});entries", {HistType::kTH1F, {{350, 0., 350.}}});
+  registry.add("h_fulljet_eta", "FullJet #eta;#eta_{jet};entries", {HistType::kTH1F, {{100, -1., 1.}}});
+  registry.add("h_fulljet_phi", "FullJet #varphi;#varphi_{jet};entries", {HistType::kTH1F, {{160, 0., 7.}}});
+
+  registry.add("h2_fulljet_pt_fulljet_NEF", ";#it{p}_{T,jet} (GeV/#it{c});E_{neutral}/E_{total}", {HistType::kTH2F, {{200, 0., 200.}, {120, 0.,1.2}}});
+
+  registry.add("h3_fulljet_r_fulljet_pt_fulljet_eta", ";#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});#eta_{jet}", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {100, -1.0, 1.0}}});
+  registry.add("h3_fulljet_r_fulljet_pt_fulljet_phi", ";#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});#varphi_{jet}", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {160, -1.0, 7.0}}});
+  registry.add("h3_fulljet_r_fulljet_eta_fulljet_phi", ";#it{R}_{jet};#eta_{jet};#varphi_{jet}", {HistType::kTH3F, {{4, 0.05, 0.45}, {100, -1.0, 1.0}, {160, -1.0, 7.0}}});
+  registry.add("h3_fulljet_r_fulljet_pt_fulljet_ntracks", ";#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});N_{jet tracks}", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {200, -0.5, 199.5}}});
+  registry.add("h3_fulljet_r_fulljet_pt_fulljet_nclusters", ";#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});N_{jet clusters}", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {200, -0.5, 199.5}}});
+  registry.add("h3_fulljet_r_fulljet_pt_fulljet_area", ";#it{R}_{jet}; #it{p}_{T,jet} (GeV/#it{c}); #it{area}_{jet}", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {300, 0., 3.}}});
+  registry.add("h3_fulljet_r_fulljet_pt_fulljet_NEF", ";#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});E_{neutral}/E_{total}", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {120, 0.0, 1.2}}});
+  registry.add("h3_fulljet_r_fulljet_pt_track_pt", ";#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});#it{p}_{T,jet tracks} (GeV/#it{c})", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {200, 0., 200.}}});
+  registry.add("h3_fulljet_r_fulljet_pt_track_eta", ";#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});#eta_{jet tracks}", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {100, -1.0, 1.0}}});
+  registry.add("h3_fulljet_r_fulljet_pt_track_phi", ";#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});#varphi_{jet tracks}", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {160, -1.0, 7.}}});
+  registry.add("h3_fulljet_r_fulljet_pt_cluster_pt", ";#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});#it{p}_{T,cluster} (GeV/#it{c})", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {200, 0., 200.}}});
+  registry.add("h3_fulljet_r_fulljet_pt_cluster_eta", ";#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});#eta_{cluster}", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {100, -1.0, 1.0}}});
+  registry.add("h3_fulljet_r_fulljet_pt_cluster_phi", ";#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});#varphi_{cluster}", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {160, -1.0, 7.}}});
+  registry.add("h3_fulljet_r_fulljet_pt_cluster_energy", ";#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});E_{cluster} (GeV)", {HistType::kTH3F, {{4, 0.05, 0.45}, {200, 0., 200.}, {200, 0., 200.0}}});
+
+  registry.add("h_fulljet_ntracks", "FullJet N tracks;N_{jet tracks};entries", {HistType::kTH1F, {{200, -0.5, 199.5}}});
+  registry.add("h_fulljet_nclusters", "FullJet N clusters;N_{jet clusters};entries", {HistType::kTH1F, {{200, -0.5, 199.5}}});
+
   }
 }//init
 
@@ -129,11 +154,39 @@ struct FullJetSpectraTask {
   template <typename T>
   void fillJetHistograms(T const& jet, float weight = 1.0)
   {
-    if(jet.r() == round(JetRadii * 100.0)) {
-      registry.fill(HIST("h_full_jet_pt"), jet.pt(), weight);
-      registry.fill(HIST("h_full_jet_eta"), jet.eta(), weight);
-      registry.fill(HIST("h_full_jet_phi"), jet.phi(), weight);
+    float neutralEnergy = 0.0;
+    if(jet.r() == round(JetRadii * 100.0f)) {
+      registry.fill(HIST("h_fulljet_pt"), jet.pt(), weight);
+      registry.fill(HIST("h_fulljet_eta"), jet.eta(), weight);
+      registry.fill(HIST("h_fulljet_phi"), jet.phi(), weight);
+      registry.fill(HIST("h_fulljet_ntracks"), jet.tracks().size(), weight);
+      registry.fill(HIST("h_fulljet_nclusters"), jet.clusters().size(), weight);
     }
+    // std::cout << "Jet radius value = " << jet.r() << std::endl;
+    registry.fill(HIST("h3_fulljet_r_fulljet_pt_fulljet_eta"), jet.r()/100.0 , jet.pt(), jet.eta(), weight);
+    registry.fill(HIST("h3_fulljet_r_fulljet_pt_fulljet_phi"), jet.r()/100.0, jet.pt(), jet.phi(), weight);
+    registry.fill(HIST("h3_fulljet_r_fulljet_eta_fulljet_phi"), jet.r()/100.0, jet.eta(), jet.phi(), weight);
+    registry.fill(HIST("h3_fulljet_r_fulljet_pt_fulljet_ntracks"), jet.r() / 100.0, jet.pt(), jet.tracks().size(), weight);
+    registry.fill(HIST("h3_fulljet_r_fulljet_pt_fulljet_nclusters"), jet.r() / 100.0, jet.pt(), jet.clusters().size(), weight);
+    registry.fill(HIST("h3_fulljet_r_fulljet_pt_fulljet_area"), jet.r()/ 100.0, jet.pt(), jet.area(), weight);
+
+    for(auto& constituent : jet.template tracks_as<JetTracks>())  {
+
+      registry.fill(HIST("h3_fulljet_r_fulljet_pt_track_pt"), jet.r() / 100.0, jet.pt(), constituent.pt(), weight);
+      registry.fill(HIST("h3_fulljet_r_fulljet_pt_track_eta"), jet.r() / 100.0, jet.pt(), constituent.eta(), weight);
+      registry.fill(HIST("h3_fulljet_r_fulljet_pt_track_phi"), jet.r() / 100.0, jet.pt(), constituent.phi(), weight);
+    }
+
+    for (auto& cluster : jet.template clusters_as<JetClusters>()) {
+      double clusterpt = cluster.energy() / std::cosh(cluster.eta());
+      neutralEnergy += cluster.energy();
+      registry.fill(HIST("h3_fulljet_r_fulljet_pt_cluster_pt"), jet.r() / 100.0, jet.pt(), clusterpt, weight);
+      registry.fill(HIST("h3_fulljet_r_fulljet_pt_cluster_eta"), jet.r() / 100.0, jet.pt(), cluster.eta(), weight);
+      registry.fill(HIST("h3_fulljet_r_fulljet_pt_cluster_phi"), jet.r() / 100.0, jet.pt(), cluster.phi(), weight);
+      registry.fill(HIST("h3_fulljet_r_fulljet_pt_cluster_energy"), jet.r() / 100.0, jet.pt(), cluster.energy(), weight);
+    }
+    registry.fill(HIST("h3_fulljet_r_fulljet_pt_fulljet_NEF"), jet.r() / 100.0, jet.pt(), neutralEnergy / jet.energy(), weight); //neutral energy fraction
+    registry.fill(HIST("h2_fulljet_pt_fulljet_NEF"), jet.pt(), neutralEnergy / jet.energy(), weight);
   }
 
   template <typename T, typename U>
@@ -172,7 +225,9 @@ struct FullJetSpectraTask {
   }
   PROCESS_SWITCH(FullJetSpectraTask, processJetsData, "Full Jets Data", false);
 
-  void processTracks(JetCollision const& collision, soa::Filtered<JetTracks> const& tracks, soa::Filtered<JetClusters> const& clusters)
+  void processTracks(JetCollision const& collision,
+                     soa::Filtered<JetTracks> const& tracks,
+                     soa::Filtered<JetClusters> const& clusters)
   {
     registry.fill(HIST("h_collisions"), 0.5);
     if(!jetderiveddatautilities::eventEMCAL(collision)) {
@@ -181,7 +236,7 @@ struct FullJetSpectraTask {
     registry.fill(HIST("h_collisions"), 1.5);
     fillTrackHistograms(tracks, clusters);
   }
-  PROCESS_SWITCH(FullJetSpectraTask, processTracks, "QA for fulljet tracks", false);
+  PROCESS_SWITCH(FullJetSpectraTask, processTracks, "QA for fulljet tracks & clusters", false);
 }; // struct
 
 using FullJetsSpectraTask = FullJetSpectraTask<aod::FullJets, aod::FullJetConstituents>;

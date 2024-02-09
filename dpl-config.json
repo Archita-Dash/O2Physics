@@ -541,7 +541,12 @@
     },
     "full-jet-spectra-pp": {
         "VertexZCut": "10",
-        "JetRadii": "0.40000000000000002",
+        "JetRadii": "0.400000006",
+        "jetradii": {
+            "values": [
+                "0.40000000000000002"
+            ]
+        },
         "jetpTMin": "0",
         "jetpTMax": "350",
         "jetEtaMin": "-1",
