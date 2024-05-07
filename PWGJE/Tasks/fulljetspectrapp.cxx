@@ -46,7 +46,7 @@ using namespace o2::analysis;
 using namespace o2::framework;
 using namespace o2::framework::expressions;
 
-template <typename JetTableData, typename JetConstituentTableData, typename JetTableMCD, typename JetConstituentTableMCD, typename JetTableMCP, typename JetConstituentTableMCP, typename JetMatchingTableMCPMCD>
+template <typename JetTableData, typename JetConstituentTableData, typename JetTableMCD, typename JetConstituentTableMCD, typename JetMatchingTableMCDMCP, typename JetTableMCP, typename JetConstituentTableMCP, typename JetMatchingTableMCPMCD>
 //haven't included JetTableMCDWeighted and JetTableMCPWeighted yet. TO be included once I check without the weights
 struct FullJetSpectrapp {
 
@@ -149,7 +149,7 @@ struct FullJetSpectrapp {
   using JetTableDataJoined = soa::Join<JetTableData, JetConstituentTableData>;
   using JetTableMCDJoined = soa::Join<JetTableMCD, JetConstituentTableMCD>;
   using JetTableMCPJoined = soa::Join<JetTableMCP, JetConstituentTableMCP>;
-  using JetTableMCDMatchedJoined = soa::Join<JetTableMCD, JetConstituentTableMCD, JetMatchingTableMCPMCD>;
+  using JetTableMCDMatchedJoined = soa::Join<JetTableMCD, JetConstituentTableMCD, JetMatchingTableMCDMCP>;
   using JetTableMCPMatchedJoined = soa::Join<JetTableMCP, JetConstituentTableMCP, JetMatchingTableMCPMCD>;
 
   // Applying some cuts(filters) on collisions, tracks, clusters
@@ -291,9 +291,14 @@ struct FullJetSpectrapp {
     fillMatchedHistograms<typename JetTableMCDMatchedJoined::iterator, JetTableMCPMatchedJoined>(mcdjet);
    }
  }
- PROCESS_SWITCH(FullJetSpectrapp, processJetsMCPMCDMatched, "full jet finder matched MCD to MCP", false);
+ PROCESS_SWITCH(FullJetSpectrapp, processJetsMCPMCDMatched, "full jet finder matched MCP to MCD", false);
+
 }; // struct
 
 // using FullJetsSpectraTask = FullJetSpectraTask<aod::FullJets, aod::FullJetConstituents, aod::FullMCDetectorLevelJets, aod::FullMCDetectorLevelJetConstituents, aod::FullMCDetectorLevelJetsMatchedToFullMCParticleLevelJets, aod::FullMCParticleLevelJets, aod::FullMCParticleLevelJetConstituents, aod::FullMCParticleLevelJetsMatchedToFullMCDetectorLevelJets>;
 
-WorkflowSpec defineDataProcessing(ConfigContext const& cfgc) { return WorkflowSpec{adaptAnalysisTask<FullJetSpectrapp>(cfgc, TaskName{"full-jet-spectra-pp"})}; }
+WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
+{
+  return WorkflowSpec{
+  adaptAnalysisTask<FullJetSpectrapp>(cfgc, TaskName{"full-jet-spectra-pp"})};
+}
