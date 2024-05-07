@@ -291,7 +291,7 @@ struct FullJetSpectrapp {
     fillMatchedHistograms<typename JetTableMCDMatchedJoined::iterator, JetTableMCPMatchedJoined>(mcdjet);
    }
  }
- PROCESS_SWITCH(FullJetSpectrapp, processJetsMCDMCPMatched, "full jet finder matched MCD to MCP", false);
+ PROCESS_SWITCH(FullJetSpectrapp, processJetsMCPMCDMatched, "full jet finder matched MCD to MCP", false);
 }; // struct
 
 // using FullJetsSpectraTask = FullJetSpectraTask<aod::FullJets, aod::FullJetConstituents, aod::FullMCDetectorLevelJets, aod::FullMCDetectorLevelJetConstituents, aod::FullMCDetectorLevelJetsMatchedToFullMCParticleLevelJets, aod::FullMCParticleLevelJets, aod::FullMCParticleLevelJetConstituents, aod::FullMCParticleLevelJetsMatchedToFullMCDetectorLevelJets>;
