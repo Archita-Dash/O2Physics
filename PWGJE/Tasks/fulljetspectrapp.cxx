@@ -46,7 +46,7 @@ using namespace o2::analysis;
 using namespace o2::framework;
 using namespace o2::framework::expressions;
 
-template <typename JetTableData, typename JetConstituentTableData, typename JetTableMCD, typename JetConstituentTableMCD, typename JetMatchingTableMCDMCP, typename JetTableMCP, typename JetConstituentTableMCP, typename JetMatchingTableMCPMCD>
+// template <typename JetTableData, typename JetConstituentTableData, typename JetTableMCD, typename JetConstituentTableMCD, typename JetMatchingTableMCDMCP, typename JetTableMCP, typename JetConstituentTableMCP, typename JetMatchingTableMCPMCD>
 //haven't included JetTableMCDWeighted and JetTableMCPWeighted yet. TO be included once I check without the weights
 struct FullJetSpectrapp {
 
@@ -146,11 +146,11 @@ struct FullJetSpectrapp {
 
   } // init
 
-  using JetTableDataJoined = soa::Join<JetTableData, JetConstituentTableData>;
-  using JetTableMCDJoined = soa::Join<JetTableMCD, JetConstituentTableMCD>;
-  using JetTableMCPJoined = soa::Join<JetTableMCP, JetConstituentTableMCP>;
-  using JetTableMCDMatchedJoined = soa::Join<JetTableMCD, JetConstituentTableMCD, JetMatchingTableMCDMCP>;
-  using JetTableMCPMatchedJoined = soa::Join<JetTableMCP, JetConstituentTableMCP, JetMatchingTableMCPMCD>;
+  using JetTableDataJoined = soa::Join<aod::FullJets, aod::FullJetConstituents>;
+  using JetTableMCDJoined = soa::Join<aod::FullMCDetectorLevelJets, aod::FullMCDetectorLevelJetConstituents>;
+  using JetTableMCPJoined = soa::Join<aod::FullMCParticleLevelJets, aod::FullMCParticleLevelJetConstituents>;
+  // using JetTableMCDMatchedJoined = soa::Join<JetTableMCD, JetConstituentTableMCD, JetMatchingTableMCDMCP>;
+  // using JetTableMCPMatchedJoined = soa::Join<JetTableMCP, JetConstituentTableMCP, JetMatchingTableMCPMCD>;
 
   // Applying some cuts(filters) on collisions, tracks, clusters
   // Filter eventCuts = (nabs(aod::jcollision::posZ) < VertexZCut);
@@ -257,7 +257,7 @@ struct FullJetSpectrapp {
       if (!jetfindingutilities::isInEtaAcceptance(jet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
         continue;
       }
-      fillHistograms(jet, collision.centrality());
+      fillJetHistograms(jet, collision.centrality());
     }
   }
   PROCESS_SWITCH(FullJetSpectrapp, processJetsMCD, "Full Jets MCD", false);
