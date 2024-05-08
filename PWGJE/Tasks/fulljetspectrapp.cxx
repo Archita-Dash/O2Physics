@@ -131,18 +131,18 @@ struct FullJetSpectrapp {
       registry.add("h_full_jet_eta_part", "jet #eta;#eta_{jet};entries", {HistType::kTH1F, {{100, -1., 1.}}});
       registry.add("h_full_jet_phi_part", "jet #varphi;#varphi_{jet};entries", {HistType::kTH1F, {{160, 0., 7.}}});
     }
-    if (doprocessJetsMCPMCDMatched) {
-      registry.add("h_full_jet_energyscaleDet", "Jet Energy Scale (det); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400.}, {200, -1.,1.}}});
-      // registry.add("h_full_jet_energyscaleDetCharged", "Jet Energy Scale (det, charged part); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
-      // registry.add("h_full_jet_energyscaleDetNeutral", "Jet Energy Scale (det, neutral part); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
-      // registry.add("h_full_jet_energyscaleDetChargedVsFull", "Jet Energy Scale (det, charged part, vs. full jet pt); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
-      // registry.add("h_full_jet_energyscaleDetNeutralVsFull", "Jet Energy Scale (det, neutral part, vs. full jet pt); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
-      registry.add("h_full_jet_energyscalePart", "Jet Energy Scale (part); p_{t,part} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400.}, {200, -1.,1.}}});
-      // registry.add("h_full_jet_energyscaleCharged", "Jet Energy Scale (charged part); p_{t,part} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
-      // registry.add("h_full_jet_energyscaleNeutral", "Jet Energy Scale (neutral part); p_{t,part} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
-      // registry.add("h_full_jet_energyscaleChargedVsFull", "Jet Energy Scale (charged part, vs. full jet pt); p_{t,part} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
-      // registry.add("h_full_jet_energyscaleNeutralVsFull", "Jet Energy Scale (neutral part, vs. full jet pt); p_{t,part} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
-    }
+    // if (doprocessJetsMCPMCDMatched) {
+    //   registry.add("h_full_jet_energyscaleDet", "Jet Energy Scale (det); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400.}, {200, -1.,1.}}});
+    //   // registry.add("h_full_jet_energyscaleDetCharged", "Jet Energy Scale (det, charged part); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
+    //   // registry.add("h_full_jet_energyscaleDetNeutral", "Jet Energy Scale (det, neutral part); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
+    //   // registry.add("h_full_jet_energyscaleDetChargedVsFull", "Jet Energy Scale (det, charged part, vs. full jet pt); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
+    //   // registry.add("h_full_jet_energyscaleDetNeutralVsFull", "Jet Energy Scale (det, neutral part, vs. full jet pt); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
+    //   registry.add("h_full_jet_energyscalePart", "Jet Energy Scale (part); p_{t,part} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400.}, {200, -1.,1.}}});
+    //   // registry.add("h_full_jet_energyscaleCharged", "Jet Energy Scale (charged part); p_{t,part} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
+    //   // registry.add("h_full_jet_energyscaleNeutral", "Jet Energy Scale (neutral part); p_{t,part} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
+    //   // registry.add("h_full_jet_energyscaleChargedVsFull", "Jet Energy Scale (charged part, vs. full jet pt); p_{t,part} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
+    //   // registry.add("h_full_jet_energyscaleNeutralVsFull", "Jet Energy Scale (neutral part, vs. full jet pt); p_{t,part} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
+    // }
 
   } // init
 
@@ -202,38 +202,38 @@ struct FullJetSpectrapp {
     }
   }
 
-  template <typename T, typename U>
-  void fillMatchedHistograms(T const& jetBase, float weight = 1.0)
-  {
-
-    float pTHat = 10. / (std::pow(weight, 1.0 / pTHatExponent));
-    if (jetBase.pt() > pTHatMaxMCD * pTHat) { //Here, jetBase = mcd jets and jetTag = mcp jets
-      return;
-    }
-
-    if (jetBase.has_matchedJetGeo()) {  //geometrical jet matching only needed for pp
-      for (auto& jetTag : jetBase.template matchedJetGeo_as<std::decay_t<U>>()) {
-        if (jetTag.pt() > pTHatMaxMCP * pTHat) {
-          continue;
-        }
-        registry.fill(HIST("h_full_jet_energyscaleDet"), jetBase.pt(), (jetBase.pt() - jetTag.pt())/ jetTag.pt() , weight);
-        registry.fill(HIST("h_full_jet_energyscalePart"), jetTag.pt(), (jetBase.pt() - jetTag.pt())/ jetTag.pt(), weight);
-
-        // registry.fill(HIST("h3_jet_r_jet_eta_tag_jet_eta_base_matchedgeo"), jetBase.r() / 100.0, jetTag.eta(), jetBase.eta(), weight);
-        // registry.fill(HIST("h3_jet_r_jet_phi_tag_jet_phi_base_matchedgeo"), jetBase.r() / 100.0, jetTag.phi(), jetBase.phi(), weight);
-        // registry.fill(HIST("h3_jet_r_jet_ntracks_tag_jet_ntracks_base_matchedgeo"), jetBase.r() / 100.0, jetTag.tracksIds().size(), jetBase.tracksIds().size(), weight);
-        // registry.fill(HIST("h3_jet_r_jet_pt_tag_jet_pt_base_diff_matchedgeo"), jetBase.r() / 100.0, jetTag.pt(), (jetTag.pt() - jetBase.pt()) / jetTag.pt(), weight);
-        // registry.fill(HIST("h3_jet_r_jet_pt_tag_jet_eta_base_diff_matchedgeo"), jetBase.r() / 100.0, jetTag.pt(), (jetTag.eta() - jetBase.eta()) / jetTag.eta(), weight);
-        // registry.fill(HIST("h3_jet_r_jet_pt_tag_jet_phi_base_diff_matchedgeo"), jetBase.r() / 100.0, jetTag.pt(), (jetTag.phi() - jetBase.phi()) / jetTag.phi(), weight);
-
-        // if (jetBase.r() == round(selectedJetsRadius * 100.0f)) {
-        //   registry.fill(HIST("h3_jet_pt_tag_jet_eta_tag_jet_eta_matchedgeo"), jetTag.pt(), jetTag.eta(), jetBase.eta(), weight);
-        //   registry.fill(HIST("h3_jet_pt_tag_jet_phi_tag_jet_phi_matchedgeo"), jetTag.pt(), jetTag.phi(), jetBase.phi(), weight);
-        //   registry.fill(HIST("h3_jet_pt_tag_jet_ntracks_tag_jet_ntracks_matchedgeo"), jetTag.pt(), jetTag.tracksIds().size(), jetBase.tracksIds().size(), weight);
-        // }
-      }
-    }
-  }
+  // template <typename T, typename U>
+  // void fillMatchedHistograms(T const& jetBase, float weight = 1.0)
+  // {
+  //
+  //   float pTHat = 10. / (std::pow(weight, 1.0 / pTHatExponent));
+  //   if (jetBase.pt() > pTHatMaxMCD * pTHat) { //Here, jetBase = mcd jets and jetTag = mcp jets
+  //     return;
+  //   }
+  //
+  //   if (jetBase.has_matchedJetGeo()) {  //geometrical jet matching only needed for pp
+  //     for (auto& jetTag : jetBase.template matchedJetGeo_as<std::decay_t<U>>()) {
+  //       if (jetTag.pt() > pTHatMaxMCP * pTHat) {
+  //         continue;
+  //       }
+  //       registry.fill(HIST("h_full_jet_energyscaleDet"), jetBase.pt(), (jetBase.pt() - jetTag.pt())/ jetTag.pt() , weight);
+  //       registry.fill(HIST("h_full_jet_energyscalePart"), jetTag.pt(), (jetBase.pt() - jetTag.pt())/ jetTag.pt(), weight);
+  //
+  //       // registry.fill(HIST("h3_jet_r_jet_eta_tag_jet_eta_base_matchedgeo"), jetBase.r() / 100.0, jetTag.eta(), jetBase.eta(), weight);
+  //       // registry.fill(HIST("h3_jet_r_jet_phi_tag_jet_phi_base_matchedgeo"), jetBase.r() / 100.0, jetTag.phi(), jetBase.phi(), weight);
+  //       // registry.fill(HIST("h3_jet_r_jet_ntracks_tag_jet_ntracks_base_matchedgeo"), jetBase.r() / 100.0, jetTag.tracksIds().size(), jetBase.tracksIds().size(), weight);
+  //       // registry.fill(HIST("h3_jet_r_jet_pt_tag_jet_pt_base_diff_matchedgeo"), jetBase.r() / 100.0, jetTag.pt(), (jetTag.pt() - jetBase.pt()) / jetTag.pt(), weight);
+  //       // registry.fill(HIST("h3_jet_r_jet_pt_tag_jet_eta_base_diff_matchedgeo"), jetBase.r() / 100.0, jetTag.pt(), (jetTag.eta() - jetBase.eta()) / jetTag.eta(), weight);
+  //       // registry.fill(HIST("h3_jet_r_jet_pt_tag_jet_phi_base_diff_matchedgeo"), jetBase.r() / 100.0, jetTag.pt(), (jetTag.phi() - jetBase.phi()) / jetTag.phi(), weight);
+  //
+  //       // if (jetBase.r() == round(selectedJetsRadius * 100.0f)) {
+  //       //   registry.fill(HIST("h3_jet_pt_tag_jet_eta_tag_jet_eta_matchedgeo"), jetTag.pt(), jetTag.eta(), jetBase.eta(), weight);
+  //       //   registry.fill(HIST("h3_jet_pt_tag_jet_phi_tag_jet_phi_matchedgeo"), jetTag.pt(), jetTag.phi(), jetBase.phi(), weight);
+  //       //   registry.fill(HIST("h3_jet_pt_tag_jet_ntracks_tag_jet_ntracks_matchedgeo"), jetTag.pt(), jetTag.tracksIds().size(), jetBase.tracksIds().size(), weight);
+  //       // }
+  //     }
+  //   }
+  // }
 
   void processDummy(JetCollisions const& collisions)
   {
@@ -282,16 +282,16 @@ struct FullJetSpectrapp {
   }
   PROCESS_SWITCH(FullJetSpectrapp, processTracks, "QA for fulljet tracks", false);
 
-  void doprocessJetsMCPMCDMatched(JetCollision const&, JetTableMCDMatchedJoined const& mcdjets, JetTableMCPMatchedJoined const&, JetTracks const&, JetClusters const&, JetParticles const&)
-  {
-    for (const auto& mcdjet: mcdjets) {
-      if (!jetfindingutilities::isInEtaAcceptance(mcdjet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
-        continue;
-    }
-    fillMatchedHistograms<typename JetTableMCDMatchedJoined::iterator, JetTableMCPMatchedJoined>(mcdjet);
-   }
- }
- PROCESS_SWITCH(FullJetSpectrapp, processJetsMCPMCDMatched, "full jet finder matched MCP to MCD", false);
+ //  void doprocessJetsMCPMCDMatched(JetCollision const&, JetTableMCDMatchedJoined const& mcdjets, JetTableMCPMatchedJoined const&, JetTracks const&, JetClusters const&, JetParticles const&)
+ //  {
+ //    for (const auto& mcdjet: mcdjets) {
+ //      if (!jetfindingutilities::isInEtaAcceptance(mcdjet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
+ //        continue;
+ //    }
+ //    fillMatchedHistograms<typename JetTableMCDMatchedJoined::iterator, JetTableMCPMatchedJoined>(mcdjet);
+ //   }
+ // }
+ // PROCESS_SWITCH(FullJetSpectrapp, processJetsMCPMCDMatched, "full jet finder MCP matched to MCD", false);
 
 }; // struct
 
