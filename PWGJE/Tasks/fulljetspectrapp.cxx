@@ -27,6 +27,7 @@
 #include "Common/Core/TrackSelection.h"
 #include "Common/Core/TrackSelectionDefaults.h"
 #include "Common/DataModel/EventSelection.h"
+#include "Common/DataModel/PIDResponse.h"
 #include "Common/DataModel/TrackSelectionTables.h"
 
 #include "PWGHF/Core/HfHelper.h"
@@ -65,7 +66,9 @@ struct FullJetSpectrapp {
   Configurable<float> jetEtaMax{"jetEtaMax", 1.0, "maximum jet eta"};
   Configurable<float> jetPhiMin{"jetPhiMin", 0., "minimum jet phi"};
   Configurable<float> jetPhiMax{"jetPhiMax", 7., "maximum jet phi"};
+  Configurable<float> jetAreaFractionMin{"jetAreaFractionMin", -99.0, "used to make a cut on the jet areas"};
   Configurable<float> leadingConstituentPtMin{"leadingConstituentPtMin", -99.0, "minimum pT selection on jet constituent"};
+
 
   // Track configurables
   Configurable<float> trackpTMin{"trackpTMin", 0.15, "minimum track pT"};
@@ -89,12 +92,12 @@ struct FullJetSpectrapp {
   Configurable<float> clusterTimeMax{"clusterTimeMax", 25., "maximum cluster time (ns)"};
   Configurable<bool> clusterRejectExotics{"clusterRejectExotics", true, "Reject exotic clusters"};
 
-  Configurable<float> pTHatMaxMCD{"pTHatMaxMCD", 999.0, "maximum fraction of hard scattering for jet acceptance in detector MC"};
-  Configurable<float> pTHatMaxMCP{"pTHatMaxMCP", 999.0, "maximum fraction of hard scattering for jet acceptance in particle MC"};
-  Configurable<float> pTHatExponent{"pTHatExponent", 6.0, "exponent of the event weight for the calculation of pTHat"};
+  // Configurable<float> pTHatMaxMCD{"pTHatMaxMCD", 999.0, "maximum fraction of hard scattering for jet acceptance in detector MC"};
+  // Configurable<float> pTHatMaxMCP{"pTHatMaxMCP", 999.0, "maximum fraction of hard scattering for jet acceptance in particle MC"};
+  // Configurable<float> pTHatExponent{"pTHatExponent", 6.0, "exponent of the event weight for the calculation of pTHat"};
 
   int trackSelection = -1;
-  // int eventSelection = -1;
+  int eventSelection = -1;
   std::string particleSelection;
 
   Service<o2::framework::O2DatabasePDG> pdgDatabase;
@@ -102,7 +105,7 @@ struct FullJetSpectrapp {
   void init(o2::framework::InitContext&)
   {
     trackSelection = jetderiveddatautilities::initialiseTrackSelection(static_cast<std::string>(trackSelections));
-    // eventSelection = jetderiveddatautilities::initialiseEventSelection(static_cast<std::string>(eventSelections));
+    eventSelection = jetderiveddatautilities::initialiseEventSelection(static_cast<std::string>(eventSelections));
     particleSelection = static_cast<std::string>(particleSelections);
 
     // JetTrack QA histograms
@@ -120,17 +123,17 @@ struct FullJetSpectrapp {
     }
 
     // Jet QA histograms
-    if (doprocessJetsData || doprocessJetsMCD) {
+    if (doprocessJetsData) {
       registry.add("h_full_jet_pt", "jet pT;#it{p}_{T_jet} (GeV/#it{c});entries", {HistType::kTH1F, {{350, 0., 350.}}});
       registry.add("h_full_jet_eta", "jet #eta;#eta_{jet};entries", {HistType::kTH1F, {{100, -1., 1.}}});
       registry.add("h_full_jet_phi", "jet #varphi;#varphi_{jet};entries", {HistType::kTH1F, {{160, 0., 7.}}});
 
     }
-    if (doprocessJetsMCP) {
-      registry.add("h_full_jet_pt_part", "jet pT;#it{p}_{T_jet} (GeV/#it{c});entries", {HistType::kTH1F, {{350, 0., 350.}}});
-      registry.add("h_full_jet_eta_part", "jet #eta;#eta_{jet};entries", {HistType::kTH1F, {{100, -1., 1.}}});
-      registry.add("h_full_jet_phi_part", "jet #varphi;#varphi_{jet};entries", {HistType::kTH1F, {{160, 0., 7.}}});
-    }
+    // if (doprocessJetsMCP) {
+    //   registry.add("h_full_jet_pt_part", "jet pT;#it{p}_{T_jet} (GeV/#it{c});entries", {HistType::kTH1F, {{350, 0., 350.}}});
+    //   registry.add("h_full_jet_eta_part", "jet #eta;#eta_{jet};entries", {HistType::kTH1F, {{100, -1., 1.}}});
+    //   registry.add("h_full_jet_phi_part", "jet #varphi;#varphi_{jet};entries", {HistType::kTH1F, {{160, 0., 7.}}});
+    // }
     // if (doprocessJetsMCPMCDMatched) {
     //   registry.add("h_full_jet_energyscaleDet", "Jet Energy Scale (det); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400.}, {200, -1.,1.}}});
     //   // registry.add("h_full_jet_energyscaleDetCharged", "Jet Energy Scale (det, charged part); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
@@ -146,10 +149,10 @@ struct FullJetSpectrapp {
 
   } // init
 
-  using JetTableDataJoined = soa::Join<aod::FullJets, aod::FullJetConstituents>;
-  using JetTableMCDJoined = soa::Join<aod::FullMCDetectorLevelJets, aod::FullMCDetectorLevelJetConstituents>;
-  using JetTableMCPJoined = soa::Join<aod::FullMCParticleLevelJets, aod::FullMCParticleLevelJetConstituents>;
-  // using JetTableMCDMatchedJoined = soa::Join<JetTableMCD, JetConstituentTableMCD, JetMatchingTableMCDMCP>;
+  using FullJetTableDataJoined = soa::Join<aod::FullJets, aod::FullJetConstituents>;
+  // using JetTableMCDJoined = soa::Join<aod::FullMCDetectorLevelJets, aod::FullMCDetectorLevelJetConstituents>;
+  // using JetTableMCPJoined = soa::Join<aod::FullMCParticleLevelJets, aod::FullMCParticleLevelJetConstituents>;
+  // // using JetTableMCDMatchedJoined = soa::Join<JetTableMCD, JetConstituentTableMCD, JetMatchingTableMCDMCP>;
   // using JetTableMCPMatchedJoined = soa::Join<JetTableMCP, JetConstituentTableMCP, JetMatchingTableMCPMCD>;
 
   // Applying some cuts(filters) on collisions, tracks, clusters
@@ -159,28 +162,52 @@ struct FullJetSpectrapp {
   aod::EMCALClusterDefinition clusterDefinition = aod::emcalcluster::getClusterDefinitionFromString(clusterDefinitionS.value);
   Filter clusterFilter = (aod::jcluster::definition == static_cast<int>(clusterDefinition) && aod::jcluster::eta > clusterEtaMin && aod::jcluster::eta < clusterEtaMax && aod::jcluster::phi >= clusterPhiMin && aod::jcluster::phi <= clusterPhiMax && aod::jcluster::energy >= clusterEnergyMin && aod::jcluster::time > clusterTimeMin && aod::jcluster::time < clusterTimeMax && (clusterRejectExotics && aod::jcluster::isExotic != true));
 
+  template <typename T, typename U>
+  bool isAcceptedJet(U const& jet)
+  {
+
+    if (jetAreaFractionMin > -98.0) {
+      if (jet.area() < jetAreaFractionMin * M_PI * (jet.r() / 100.0) * (jet.r() / 100.0)) {
+        return false;
+      }
+    }
+    if (leadingConstituentPtMin > -98.0) {
+      bool isMinleadingConstituent = false;
+      for (auto& constituent : jet.template tracks_as<T>()) {
+        if (constituent.pt() >= leadingConstituentPtMin) {
+          isMinleadingConstituent = true;
+          break;
+        }
+      }
+      // could add clusters later if needed
+      if (!isMinleadingConstituent) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   template <typename T>
   void fillJetHistograms(T const& jet, float weight = 1.0)
   {
-    if (jet.r() == round(JetRadii * 100.0f)) {
-      registry.fill(HIST("h_full_jet_pt"), jet.pt(), weight);
-      registry.fill(HIST("h_full_jet_eta"), jet.eta(), weight);
-      registry.fill(HIST("h_full_jet_phi"), jet.phi(), weight);
-      // registry.fill(HIST("h_full_jet_energyscaleDet"), jet.phi(), weight);
-
+      if (jet.r() == round(JetRadii * 100.0f)) {
+        registry.fill(HIST("h_full_jet_pt"), jet.pt(), weight);
+        registry.fill(HIST("h_full_jet_eta"), jet.eta(), weight);
+        registry.fill(HIST("h_full_jet_phi"), jet.phi(), weight);
+        // registry.fill(HIST("h_full_jet_energyscaleDet"), jet.phi(), weight);
     }
   }
 
-  template <typename T>
-  void fillMCPHistograms(T const& jet, float weight = 1.0)
-  {
-    if (jet.r() == round(JetRadii * 100.0f)) {
-      registry.fill(HIST("h_full_jet_pt_part"), jet.pt(), weight);
-      registry.fill(HIST("h_full_jet_eta_part"), jet.eta(), weight);
-      registry.fill(HIST("h_full_jet_phi_part"), jet.phi(), weight);
-      // registry.fill(HIST("h_full_jet_ntracks_part"), jet.tracksIds().size(), weight);
-    }
-  }
+  // template <typename T>
+  // void fillMCPHistograms(T const& jet, float weight = 1.0)
+  // {
+  //   if (jet.r() == round(JetRadii * 100.0f)) {
+  //     registry.fill(HIST("h_full_jet_pt_part"), jet.pt(), weight);
+  //     registry.fill(HIST("h_full_jet_eta_part"), jet.eta(), weight);
+  //     registry.fill(HIST("h_full_jet_phi_part"), jet.phi(), weight);
+  //     // registry.fill(HIST("h_full_jet_ntracks_part"), jet.tracksIds().size(), weight);
+  //   }
+  // }
 
   template <typename T, typename U>
   void fillTrackHistograms(T const& tracks, U const& clusters, float weight = 1.0)
@@ -240,36 +267,39 @@ struct FullJetSpectrapp {
   }
   PROCESS_SWITCH(FullJetSpectrapp, processDummy, "dummy task", true);
 
-  void processJetsData(soa::Filtered<JetCollisions>::iterator const& collision, JetTableDataJoined const& jets, JetTracks const& tracks, JetClusters const& clusters)
+  void processJetsData(soa::Filtered<JetCollisions>::iterator const& collision, FullJetTableDataJoined const& jets, JetTracks const&, JetClusters const&)
   {
     for (auto const& jet : jets) {
       if (!jetfindingutilities::isInEtaAcceptance(jet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
         continue;
       }
-      fillJetHistograms(jet, collision.centrality());
+      if (!isAcceptedJet<JetTracks>(jet)) {
+        continue;
+      }
+      fillJetHistograms(jet);
     }
   }
   PROCESS_SWITCH(FullJetSpectrapp, processJetsData, "Full Jets Data", false);
 
-  void processJetsMCD(soa::Filtered<JetCollisions>::iterator const& collision, JetTableMCDJoined const& jets, JetTracks const& tracks, JetClusters const& clusters)
-  {
-    for (auto const& jet : jets) {
-      if (!jetfindingutilities::isInEtaAcceptance(jet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
-        continue;
-      }
-      fillJetHistograms(jet, collision.centrality());
-    }
-  }
-  PROCESS_SWITCH(FullJetSpectrapp, processJetsMCD, "Full Jets MCD", false);
-
-  void processJetsMCP(typename JetTableMCPJoined::iterator const& jet, JetParticles const& particles)
-  {
-    if (!jetfindingutilities::isInEtaAcceptance(jet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
-      return;
-    }
-    fillMCPHistograms(jet);
-  }
-  PROCESS_SWITCH(FullJetSpectrapp, processJetsMCP, "Full Jets MCP", false);
+  // void processJetsMCD(soa::Filtered<JetCollisions>::iterator const& collision, JetTableMCDJoined const& jets, JetTracks const& tracks, JetClusters const& clusters)
+  // {
+  //   for (auto const& jet : jets) {
+  //     if (!jetfindingutilities::isInEtaAcceptance(jet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
+  //       continue;
+  //     }
+  //     // fillJetHistograms(jet, collision.centrality());
+  //   }
+  // }
+  // PROCESS_SWITCH(FullJetSpectrapp, processJetsMCD, "Full Jets MCD", false);
+  //
+  // void processJetsMCP(typename JetTableMCPJoined::iterator const& jet, JetParticles const& particles)
+  // {
+  //   if (!jetfindingutilities::isInEtaAcceptance(jet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
+  //     return;
+  //   }
+  //   // fillMCPHistograms(jet);
+  // }
+  // PROCESS_SWITCH(FullJetSpectrapp, processJetsMCP, "Full Jets MCP", false);
 
   void processTracks(JetCollision const& collision, soa::Filtered<JetTracks> const& tracks, soa::Filtered<JetClusters> const& clusters)
   {
@@ -278,7 +308,7 @@ struct FullJetSpectrapp {
       return;
     }
     registry.fill(HIST("h_collisions"), 1.5);
-    fillTrackHistograms(tracks, clusters);
+    fillTrackHistograms(tracks, clusters, 1.0);
   }
   PROCESS_SWITCH(FullJetSpectrapp, processTracks, "QA for fulljet tracks", false);
 
