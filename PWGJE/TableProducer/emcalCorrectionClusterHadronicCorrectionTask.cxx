@@ -32,9 +32,11 @@
 #include "PWGJE/DataModel/EMCALClusters.h"
 #include "PWGJE/DataModel/EMCALMatchedTracks.h"
 #include "PWGJE/DataModel/EMCALMatchedCollisions.h"
+#include "PWGJE/DataModel/emcalCorrectionClusterHadronicCorrectionTask.h"
 
 #include "Common/DataModel/EventSelection.h"
 #include "Common/DataModel/TrackSelectionTables.h"
+#include "Common/DataModel/PIDResponse.h"
 #include "DataFormatsEMCAL/Cell.h"
 #include "DataFormatsEMCAL/Constants.h"
 #include "DataFormatsEMCAL/AnalysisCluster.h"
@@ -57,7 +59,7 @@ using myTracks  =  o2::soa::Filtered<o2::soa::Join<o2::aod::pidTPCFullEl, o2::ao
 
 
 struct EmcalCorrectionClusterHadronicCorrectionTask {
-  Produces<o2::aod::EmcalHCs> hadroniccorrectedenergy;
+  Produces<o2::aod::EmcalHCs> hadroniccorrectedclusters;
 
   HistogramRegistry registry;
 
@@ -115,10 +117,10 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
       //Looping over all clusters matched to the collision
       for (const auto& cluster : clusters) {
       registry.fill(HIST("h_matchedclusters"), 1);
-      double pT, mom;
-      double Ecluster; double Ecluster1; double Ecluster2; double EclusterAll1; double EclusterAll2;
-      Ecluster = Ecluster1 = Ecluster2 = EclusterAll1 = EclusterAll2 = cluster.energy();
-      pT = cluster.energy() / cosh(cluster.eta());
+      // double pT, mom;
+      double Ecluster1; double Ecluster2; double EclusterAll1; double EclusterAll2;
+      Ecluster1 = Ecluster2 = EclusterAll1 = EclusterAll2 = cluster.energy();
+      // double pT = cluster.energy() / cosh(cluster.eta());
 
       //selecting ALL MATCHED TRACKS after slicing all entries in perClusterMatchedTracks by the cluster globalIndex
       auto tracksofcluster = matchedtracks.sliceBy(perClusterMatchedTracks, cluster.globalIndex());
@@ -132,13 +134,13 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
       //Total number of matched tracks = 20 (hard-coded)
       for (const auto& match : tracksofcluster) {
         // bool doHadCorrOneTrack = false;
-        mom = abs(match.track_as<myTracks>().p());
+        double mom = abs(match.track_as<myTracks>().p());
         registry.fill(HIST("h_matchedtracks"), 1);
 
         //CASE 1: no matched tracks or tracks with a very low pT -> skip clusters and don't subtract any cluster energy
         if ((tracksofcluster.size() == 0) || (mom < 1e-6)) {
           // return Ecluster;
-          return;
+          continue;
         } // end CASE 1
 
         //CASE 2:
@@ -147,32 +149,37 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
         // - If you want to do systematic studies -> perform the above two checks and then subtract 70% energy instead of 100%
 
         if (tracksofcluster.size() != 0) {
-          // auto trackEta = match.tracks_as<myTracks>().eta();
-          // auto trackPhi = match.tracks_as<myTracks>().phi();
-          // double dPhi = trackPhi - cluster.phi();
-          // double dEta = trackEta - cluster.eta();
+          auto trackEta = match.track_as<myTracks>().eta();
+          auto trackPhi = match.track_as<myTracks>().phi();
+          double dPhi = trackPhi - cluster.phi();
+          double dEta = trackEta - cluster.eta();
           //
-          // if (fabs(dEta) >= minDEta || fabs(dPhi) >= minDPhi) { // dEta and dPhi cut : ensures that the matched track is within the desired eta/phi window
-          //   continue;
-          // }
-          if (fHadCorr1 > 1 && cmt == 0)  {         // 100% energy subtraction for the one closest track
+          if (fabs(dEta) >= minDEta || fabs(dPhi) >= minDPhi) { // dEta and dPhi cut : ensures that the matched track is within the desired eta/phi window
+            continue;
+          }
+          if (fHadCorr1 > 1 && cmt == 0)  {         // 100% energy subtraction for only the one closest matched track
             Ecluster1 -= fHadCorr1 * mom;
+            //write this corrected energy to the table
+            hadroniccorrectedclusters(cluster.energy());
           }
           if (Ecluster1 < 0) Ecluster1 = 0;
 
           if (fHadCorralltrks1 > 0) {              // 100% energy subtraction for all tracks
             EclusterAll1 -= fHadCorralltrks1 * mom;
+            hadroniccorrectedclusters(cluster.energy());
           }
           if (EclusterAll1 < 0) EclusterAll1 = 0;
 
           if (doHadCorrSyst)  {                    // if you want to subtract 70% energy (as was in Run 2) for systematic studies
-            if (fHadCorr2 > 1 && cmt == 0)  {     // 70% energy subtraction for the one closest track
+            if (fHadCorr2 > 1 && cmt == 0)  {     // 70% energy subtraction for only the one closest track
               Ecluster2 -= fHadCorr2 * mom;
+              hadroniccorrectedclusters(cluster.energy());
             }
             if (Ecluster2 < 0) Ecluster2 = 0;
 
             if (fHadCorralltrks2 > 0) {         // 70% energy subtraction for all tracks
               EclusterAll2 -= fHadCorralltrks2 * mom;
+              hadroniccorrectedclusters(cluster.energy());
             }
             if (EclusterAll2 < 0) EclusterAll2 = 0;
           }
@@ -180,6 +187,7 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
       } //end of track loop
     } //end of cluster loop
   } //end of process function
+  PROCESS_SWITCH(EmcalCorrectionClusterHadronicCorrectionTask, processMatchedCollisions, "Process matched clusters from collision", true);
 }; //end of struct
 
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc) { return WorkflowSpec{adaptAnalysisTask<EmcalCorrectionClusterHadronicCorrectionTask>(cfgc, TaskName{"emcal-correction-cluster-hadronic-correction-task"})}; }
