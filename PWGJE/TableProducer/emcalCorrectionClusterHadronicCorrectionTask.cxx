@@ -138,6 +138,7 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
         registry.fill(HIST("h_matchedtracks"), 1);
 
         //CASE 1: no matched tracks or tracks with a very low pT -> skip clusters and don't subtract any cluster energy
+        //Should I also write this non-subracted energy value to the table???
         if ((tracksofcluster.size() == 0) || (mom < 1e-6)) {
           // return Ecluster;
           continue;
@@ -160,26 +161,26 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
           if (fHadCorr1 > 1 && cmt == 0)  {         // 100% energy subtraction for only the one closest matched track
             Ecluster1 -= fHadCorr1 * mom;
             //write this corrected energy to the table
-            hadroniccorrectedclusters(cluster.energy());
+            hadroniccorrectedclusters(cluster.energy(), 0.f, 0.f, 0.f);
           }
           if (Ecluster1 < 0) Ecluster1 = 0;
 
           if (fHadCorralltrks1 > 0) {              // 100% energy subtraction for all tracks
             EclusterAll1 -= fHadCorralltrks1 * mom;
-            hadroniccorrectedclusters(cluster.energy());
+            hadroniccorrectedclusters(0.f, 0.f, cluster.energy(), 0.f);
           }
           if (EclusterAll1 < 0) EclusterAll1 = 0;
 
           if (doHadCorrSyst)  {                    // if you want to subtract 70% energy (as was in Run 2) for systematic studies
             if (fHadCorr2 > 1 && cmt == 0)  {     // 70% energy subtraction for only the one closest track
               Ecluster2 -= fHadCorr2 * mom;
-              hadroniccorrectedclusters(cluster.energy());
+              hadroniccorrectedclusters(0.f, cluster.energy(), 0.f, 0.f);
             }
             if (Ecluster2 < 0) Ecluster2 = 0;
 
             if (fHadCorralltrks2 > 0) {         // 70% energy subtraction for all tracks
               EclusterAll2 -= fHadCorralltrks2 * mom;
-              hadroniccorrectedclusters(cluster.energy());
+              hadroniccorrectedclusters(0.f, 0.f, 0.f, cluster.energy());
             }
             if (EclusterAll2 < 0) EclusterAll2 = 0;
           }
