@@ -71,6 +71,7 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
   Configurable<float> maxTime{"maxTime", +20., "Maximum cluster time for time cut"};
   Configurable<float> minM02{"minM02", 0.1, "Minimum M02 for M02 cut"};
   Configurable<float> maxM02{"maxM02", 0.9, "Maximum M02 for M02 cut"};
+  Configurable<float> minTrackPt{"minTrackPt", 0.15, "Minimum pT for tracks"};
   Configurable<double> fHadCorr1{"HadCorr1", 1., "hadronic correction fraction for complete cluster energy subtraction for one matched track" };    //100% - default
   Configurable<double> fHadCorr2{"HadCorr2", 0.7, "hadronic correction fraction for systematic studies for one matched track"};                     //70%
   Configurable<double> fHadCorralltrks1{"HadCorralltrks1", 1., "hadronic correction fraction for complete cluster energy subtraction for all matched tracks" };    //100% - all tracks
@@ -110,7 +111,7 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
   }
 
   Filter clusterDefinitionSelection = (o2::aod::emcalcluster::definition == mClusterDefinition) && (o2::aod::emcalcluster::time >= minTime) && (o2::aod::emcalcluster::time <= maxTime) && (o2::aod::emcalcluster::m02 > minM02) && (o2::aod::emcalcluster::m02 < maxM02);
-
+  Filter trackSelection = (o2::aod::track::pt >= minTrackPt);
   //The matching of clusters and tracks is already centralised in the EMCAL framework.
   //One only needs to apply a filter on matched clusters
   //Here looping over all collisions matched to EMCAL clusters
