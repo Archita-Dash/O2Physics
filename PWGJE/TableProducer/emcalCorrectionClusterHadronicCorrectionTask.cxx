@@ -85,7 +85,7 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
   Configurable<double> EtaMatch{"etaMatch", 0.025, "eta match value in pp"};
 
   Configurable<bool> doHadCorrSyst{"doHadCorrSyst", false, "Do hadronic correction for systematic studies"};
-  Configurable<bool> doMomDepMatching{"doMomDepMatching", false, "Do momentum dependent track matching"};
+  Configurable<bool> doMomDepMatching{"doMomDepMatching", false, "Do momentum dependent track matching"}; // to be always set to true in Run 3
 
   // Configurable<bool> doHadCorrOneTrack{"doHadCorrOneTrack", false, "Do hadronic correction with one track only"};  //for clusters with only one matched track
   // Configurable<bool> doHadCorrAllTracks{"doHadCorrAllTracks", true, "Do hadronic correction with all tracks"};    //for clusters with more than one matched tracks
@@ -169,23 +169,24 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
           }
 
           //Do pT-dependent track matching
-          if(fdoMomDepMatching) {
+          if(doMomDepMatching)
+          {
             trackEta     = funcPtDepEta.Eval(mom);
-            trackPhiHigh = +funcPtDepPhi.Eval(mom);
-            trackPhiLow  = -funcPtDepPhi.Eval(mom);
-          }
-          if ((phidiff < trackPhiHigh && phidiff > trackPhiLow) && TMath::Abs(etadiff) < trackEta){
+            auto trackPhiHigh = +funcPtDepPhi.Eval(mom);
+            auto trackPhiLow  = -funcPtDepPhi.Eval(mom);
+
+          if ((phidiff < trackPhiHigh && phidiff > trackPhiLow) && fabs(etadiff) < trackEta){
             totalTrkP += mom;
           }
 
-          if (((minDPhi < trackPhiHigh && minDPhi > trackPhiLow) && TMath::Abs(minDEta) < trackEta) && fHadCorr1 > 1 && cmt == 0)  {         // 100% energy subtraction for only the one closest matched track
+          if (((minDPhi < trackPhiHigh && minDPhi > trackPhiLow) && fabs(minDEta) < trackEta) && fHadCorr1 > 1 && cmt == 0)  {         // 100% energy subtraction for only the one closest matched track
             Ecluster1 -= fHadCorr1 * mom;
             //write this corrected energy to the table
             hadroniccorrectedclusters(cluster.energy(), 0.f, 0.f, 0.f);
           }
           if (Ecluster1 < 0) Ecluster1 = 0;
 
-          if (fHadCorralltrks1 > 0) {              // 100% energy subtraction for all tracks;
+          if (((minDPhi < trackPhiHigh && minDPhi > trackPhiLow) && fabs(minDEta) < trackEta) && fHadCorralltrks1 > 0) {              // 100% energy subtraction for all tracks;
             auto Esub = fHadCorralltrks1 * totalTrkP;
             if (Esub > EclusterAll1) Esub = EclusterAll1;
 
@@ -205,18 +206,19 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
           if (EclusterAll1 < 0) EclusterAll1 = 0;
 
           if (doHadCorrSyst)  {                    // if you want to subtract 70% energy (as was in Run 2) for systematic studies
-            if (fHadCorr2 > 1 && cmt == 0)  {     // 70% energy subtraction for only the one closest track
+            if (((minDPhi < trackPhiHigh && minDPhi > trackPhiLow) && fabs(minDEta) < trackEta) && fHadCorr2 > 1 && cmt == 0)  {     // 70% energy subtraction for only the one closest track
               Ecluster2 -= fHadCorr2 * mom;
               hadroniccorrectedclusters(0.f, cluster.energy(), 0.f, 0.f);
             }
             if (Ecluster2 < 0) Ecluster2 = 0;
 
-            if (fHadCorralltrks2 > 0) {         // 70% energy subtraction for all tracks
+            if (((minDPhi < trackPhiHigh && minDPhi > trackPhiLow) && fabs(minDEta) < trackEta) && fHadCorralltrks2 > 0) {         // 70% energy subtraction for all tracks
               EclusterAll2 -= fHadCorralltrks2 * mom;
               hadroniccorrectedclusters(0.f, 0.f, 0.f, cluster.energy());
             }
             if (EclusterAll2 < 0) EclusterAll2 = 0;
           }
+        } //doMomDepMatching ends
         } // end of CASE 2
       } //end of track loop
     } //end of cluster loop
