@@ -72,15 +72,17 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
   Configurable<double> fHadCorralltrks2{"HadCorralltrks2", 0.7, "hadronic correction fraction for systematic studies for all matched tracks"};                     //70%
   Configurable<float> minDEta{"minDEta", 0.01, "Minimum dEta between track and cluster"};
   Configurable<float> minDPhi{"minDPhi", 0.01, "Minimum dPhi between track and cluster"};
+  Configurable<double> fEexcl{"Eexcl", 0., "Cell energy that cannot be subtracted"};
 
   //pT-dependent track-matching configurables
   Configurable<float> Eta0{"eta0", 0.04, "Param 0 in eta for pt-dependent matching"};
   Configurable<float> Eta1{"eta1", 0.010, "Param 1 in eta for pt-dependent matching"};
   Configurable<float> Eta2{"eta2", 2.5, "Param 2 in eta for pt-dependent matching"};
-
   Configurable<float> Phi0{"phi0", 0.09, "Param 0 in phi for pt-dependent matching"};
   Configurable<float> Phi1{"phi1", 0.015, "Param 1 in phi for pt-dependent matching"};
   Configurable<float> Phi2{"phi2", 2.0, "Param 2 in phi for pt-dependent matching"};
+  Configurable<double> PhiMatch{"phiMatch", 0.050, "phi match value in pp"};
+  Configurable<double> EtaMatch{"etaMatch", 0.025, "eta match value in pp"};
 
   Configurable<bool> doHadCorrSyst{"doHadCorrSyst", false, "Do hadronic correction for systematic studies"};
   Configurable<bool> doMomDepMatching{"doMomDepMatching", false, "Do momentum dependent track matching"};
@@ -124,16 +126,23 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
 
       //selecting ALL MATCHED TRACKS after slicing all entries in perClusterMatchedTracks by the cluster globalIndex
       auto tracksofcluster = matchedtracks.sliceBy(perClusterMatchedTracks, cluster.globalIndex());
-      int cmt = 0; // counter for closest matched track
+      int cmt = 0;             // counter for closest matched track
+      double totalTrkP = 0.0;  // counter for total track momentum
 
-      // To Do: pT-dependent track-matching instead of PID based track-matching - suggested by Markus
-      //
-      //
+      // pT-dependent track-matching instead of PID based track-matching to be adapted from Run 2 - suggested by Markus
+
+      TF1 funcPtDepEta("func", "[1] + 1 / pow(x + pow(1 / ([0] - [1]), 1 / [2]), [2])");
+      funcPtDepEta.SetParameters(Eta0, Eta1, Eta2);
+      TF1 funcPtDepPhi("func", "[1] + 1 / pow(x + pow(1 / ([0] - [1]), 1 / [2]), [2])");
+      funcPtDepEta.SetParameters(Phi0, Phi1, Phi2);
 
       //Looping over all matched tracks for the cluster
       //Total number of matched tracks = 20 (hard-coded)
       for (const auto& match : tracksofcluster) {
         // bool doHadCorrOneTrack = false;
+        double etadiff = 999.;
+        double phidiff = 999.;
+
         double mom = abs(match.track_as<myTracks>().p());
         registry.fill(HIST("h_matchedtracks"), 1);
 
@@ -154,19 +163,43 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
           auto trackPhi = match.track_as<myTracks>().phi();
           double dPhi = trackPhi - cluster.phi();
           double dEta = trackEta - cluster.eta();
-          //
+
           if (fabs(dEta) >= minDEta || fabs(dPhi) >= minDPhi) { // dEta and dPhi cut : ensures that the matched track is within the desired eta/phi window
             continue;
           }
-          if (fHadCorr1 > 1 && cmt == 0)  {         // 100% energy subtraction for only the one closest matched track
+
+          //Do pT-dependent track matching
+          if(fdoMomDepMatching) {
+            trackEta     = funcPtDepEta.Eval(mom);
+            trackPhiHigh = +funcPtDepPhi.Eval(mom);
+            trackPhiLow  = -funcPtDepPhi.Eval(mom);
+          }
+          if ((phidiff < trackPhiHigh && phidiff > trackPhiLow) && TMath::Abs(etadiff) < trackEta){
+            totalTrkP += mom;
+          }
+
+          if (((minDPhi < trackPhiHigh && minDPhi > trackPhiLow) && TMath::Abs(minDEta) < trackEta) && fHadCorr1 > 1 && cmt == 0)  {         // 100% energy subtraction for only the one closest matched track
             Ecluster1 -= fHadCorr1 * mom;
             //write this corrected energy to the table
             hadroniccorrectedclusters(cluster.energy(), 0.f, 0.f, 0.f);
           }
           if (Ecluster1 < 0) Ecluster1 = 0;
 
-          if (fHadCorralltrks1 > 0) {              // 100% energy subtraction for all tracks
-            EclusterAll1 -= fHadCorralltrks1 * mom;
+          if (fHadCorralltrks1 > 0) {              // 100% energy subtraction for all tracks;
+            auto Esub = fHadCorralltrks1 * totalTrkP;
+            if (Esub > EclusterAll1) Esub = EclusterAll1;
+
+            //applying Peter's algo from Run 2 : to not subtract the full energy of the cluster
+            auto clusEexcl = fEexcl * cluster.nCells();
+
+            if (EclusterAll1 < clusEexcl) clusEexcl = EclusterAll1;
+            if ((EclusterAll1 - Esub) < clusEexcl) Esub = EclusterAll1 - clusEexcl;
+
+            // To DO: Implement M02SubtractionScheme
+            //
+            //
+
+            EclusterAll1 -= Esub;
             hadroniccorrectedclusters(0.f, 0.f, cluster.energy(), 0.f);
           }
           if (EclusterAll1 < 0) EclusterAll1 = 0;
