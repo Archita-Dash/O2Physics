@@ -128,13 +128,18 @@ struct FullJetSpectrapp {
       registry.add("h_full_jet_pt", "jet pT;#it{p}_{T_jet} (GeV/#it{c});entries", {HistType::kTH1F, {{350, 0., 350.}}});
       registry.add("h_full_jet_eta", "jet #eta;#eta_{jet};entries", {HistType::kTH1F, {{100, -1., 1.}}});
       registry.add("h_full_jet_phi", "jet #varphi;#varphi_{jet};entries", {HistType::kTH1F, {{160, 0., 7.}}});
+      registry.add("h3_jet_r_jet_pt_jet_neutralenergyfraction", "#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});E_{neutral}/E_{total}", {HistType::kTH3F, {{100, 0., 0.4}, {200, 0., 200.}, {120, 0.0, 1.2}}});
 
     }
     if (doprocessJetsMCP) {
       registry.add("h_full_jet_pt_part", "jet pT;#it{p}_{T_jet} (GeV/#it{c});entries", {HistType::kTH1F, {{350, 0., 350.}}});
       registry.add("h_full_jet_eta_part", "jet #eta;#eta_{jet};entries", {HistType::kTH1F, {{100, -1., 1.}}});
       registry.add("h_full_jet_phi_part", "jet #varphi;#varphi_{jet};entries", {HistType::kTH1F, {{160, 0., 7.}}});
+      registry.add("h3_jet_r_jet_pt_jet_neutralenergyfraction", "#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});E_{neutral}/E_{total}", {HistType::kTH3F, {{100, 0., 0.4}, {200, 0., 200.}, {120, 0.0, 1.2}}});
+
     }
+    //Jet Matching not yet implemented for Full Jets!!
+
     // if (doprocessJetsMCPMCDMatched) {
     //   registry.add("h_full_jet_energyscaleDet", "Jet Energy Scale (det); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400.}, {200, -1.,1.}}});
     //   // registry.add("h_full_jet_energyscaleDetCharged", "Jet Energy Scale (det, charged part); p_{t,det} (GeV/c); (p_{t,det} - p_{t,part})/p_{t,part}", {HistType::kTH2F,{{400, 0., 400., 200, -1.,1.}}});
@@ -152,7 +157,10 @@ struct FullJetSpectrapp {
 
   using FullJetTableDataJoined = soa::Join<aod::FullJets, aod::FullJetConstituents>;
   using JetTableMCDJoined = soa::Join<aod::FullMCDetectorLevelJets, aod::FullMCDetectorLevelJetConstituents>;
+  using JetTableMCDWeightedJoined = soa::Join<aod::FullMCDetectorLevelJets, aod::FullMCDetectorLevelJetConstituents, aod::FullMCDetectorLevelJetEventWeights>;
   using JetTableMCPJoined = soa::Join<aod::FullMCParticleLevelJets, aod::FullMCParticleLevelJetConstituents>;
+  using JetTableMCPWeightedJoined = soa::Join<aod::FullMCParticleLevelJets, aod::FullMCParticleLevelJetConstituents, aod::FullMCParticleLevelJetEventWeights>;
+
   // using JetTableMCDMatchedJoined = soa::Join<JetTableMCD, JetConstituentTableMCD, JetMatchingTableMCDMCP>;
   // using JetTableMCPMatchedJoined = soa::Join<JetTableMCP, JetConstituentTableMCP, JetMatchingTableMCPMCD>;
 
@@ -163,30 +171,30 @@ struct FullJetSpectrapp {
   aod::EMCALClusterDefinition clusterDefinition = aod::emcalcluster::getClusterDefinitionFromString(clusterDefinitionS.value);
   Filter clusterFilter = (aod::jcluster::definition == static_cast<int>(clusterDefinition) && aod::jcluster::eta > clusterEtaMin && aod::jcluster::eta < clusterEtaMax && aod::jcluster::phi >= clusterPhiMin && aod::jcluster::phi <= clusterPhiMax && aod::jcluster::energy >= clusterEnergyMin && aod::jcluster::time > clusterTimeMin && aod::jcluster::time < clusterTimeMax && (clusterRejectExotics && aod::jcluster::isExotic != true));
 
-  // template <typename T, typename U>
-  // bool isAcceptedJet(U const& jet)
-  // {
-  //
-  //   if (jetAreaFractionMin > -98.0) {
-  //     if (jet.area() < jetAreaFractionMin * M_PI * (jet.r() / 100.0) * (jet.r() / 100.0)) {
-  //       return false;
-  //     }
-  //   }
-  //   if (leadingConstituentPtMin > -98.0) {
-  //     bool isMinleadingConstituent = false;
-  //     for (auto& constituent : jet.template tracks_as<T>()) {
-  //       if (constituent.pt() >= leadingConstituentPtMin) {
-  //         isMinleadingConstituent = true;
-  //         break;
-  //       }
-  //     }
-  //     // could add clusters later if needed
-  //     if (!isMinleadingConstituent) {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // }
+  template <typename T, typename U>
+  bool isAcceptedJet(U const& jet)
+  {
+
+    if (jetAreaFractionMin > -98.0) {
+      if (jet.area() < jetAreaFractionMin * M_PI * (jet.r() / 100.0) * (jet.r() / 100.0)) {
+        return false;
+      }
+    }
+    if (leadingConstituentPtMin > -98.0) {
+      bool isMinleadingConstituent = false;
+      for (auto& constituent : jet.template tracks_as<T>()) {
+        if (constituent.pt() >= leadingConstituentPtMin) {
+          isMinleadingConstituent = true;
+          break;
+        }
+      }
+      // could add clusters later if needed
+      if (!isMinleadingConstituent) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   template <typename T>
   void fillJetHistograms(T const& jet, float weight = 1.0)
@@ -274,9 +282,9 @@ struct FullJetSpectrapp {
       if (!jetfindingutilities::isInEtaAcceptance(jet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
         continue;
       }
-    //   if (!isAcceptedJet<JetTracks>(jet)) {
-    //     continue;
-    //   }
+      if (!isAcceptedJet<JetTracks>(jet)) {
+        continue;
+      }
       fillJetHistograms(jet);
     }
   }
@@ -288,19 +296,51 @@ struct FullJetSpectrapp {
       if (!jetfindingutilities::isInEtaAcceptance(jet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
         continue;
       }
+      if (!isAcceptedJet<JetTracks>(jet)) {
+        continue;
+      }
       fillJetHistograms(jet);
     }
   }
   PROCESS_SWITCH(FullJetSpectrapp, processJetsMCD, "Full Jets MCD", false);
+
+  void processJetsMCDWeighted(soa::Filtered<JetCollisions>::iterator const& collision, JetTableMCDWeightedJoined const& jets, JetTracks const&, JetClusters const&)
+  {
+    for (auto const& jet : jets) {
+      if (!jetfindingutilities::isInEtaAcceptance(jet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
+        continue;
+      }
+      if (!isAcceptedJet<JetTracks>(jet)) {
+        continue;
+      }
+      fillJetHistograms(jet, jet.eventWeight());
+    }
+  }
+  PROCESS_SWITCH(FullJetSpectrapp, processJetsMCDWeighted, "jet finder HF QA mcd on weighted events", false);
 
   void processJetsMCP(typename JetTableMCPJoined::iterator const& jet, JetParticles const& particles)
   {
     if (!jetfindingutilities::isInEtaAcceptance(jet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
       return;
     }
+    if (!isAcceptedJet<JetTracks>(jet)) {
+      return;
+    }
     fillMCPHistograms(jet);
   }
   PROCESS_SWITCH(FullJetSpectrapp, processJetsMCP, "Full Jets MCP", false);
+
+  void processJetsMCPWeighted(typename JetTableMCPWeightedJoined::iterator const& jet, JetParticles const&)
+  {
+    if (!jetfindingutilities::isInEtaAcceptance(jet, jetEtaMin, jetEtaMax, trackEtaMin, trackEtaMax)) {
+      return;
+    }
+    if (!isAcceptedJet<JetParticles>(jet)) {
+      return;
+    }
+    fillMCPHistograms(jet, jet.eventWeight());
+  }
+  PROCESS_SWITCH(FullJetSpectrapp, processJetsMCPWeighted, "jet finder HF QA mcp on weighted events", false);
 
   void processTracks(JetCollision const& collision, soa::Filtered<JetTracks> const& tracks, soa::Filtered<JetClusters> const& clusters)
   {
