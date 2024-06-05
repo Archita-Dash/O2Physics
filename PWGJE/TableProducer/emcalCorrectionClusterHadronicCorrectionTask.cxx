@@ -91,7 +91,7 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
   Configurable<double> EtaMatch{"etaMatch", 0.025, "eta match value in pp"};
 
   Configurable<bool> doHadCorrSyst{"doHadCorrSyst", false, "Do hadronic correction for systematic studies"};
-  Configurable<bool> doMomDepMatching{"doMomDepMatching", false, "Do momentum dependent track matching"}; // to be always set to true in Run 3
+  Configurable<bool> doMomDepMatching{"doMomDepMatching", true, "Do momentum dependent track matching"}; // to be always set to true in Run 3
 
   // Configurable<bool> doHadCorrOneTrack{"doHadCorrOneTrack", false, "Do hadronic correction with one track only"};  //for clusters with only one matched track
   // Configurable<bool> doHadCorrAllTracks{"doHadCorrAllTracks", true, "Do hadronic correction with all tracks"};    //for clusters with more than one matched tracks
