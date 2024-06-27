@@ -152,16 +152,15 @@ if(FastJet_FOUND)
                         SOURCES jetChCorr.cxx
                         PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore
                         COMPONENT_NAME Analysis)
-<<<<<<< HEAD
+
     o2physics_add_dpl_workflow(full-jet-spectra-pp
                         SOURCES fulljetspectrapp.cxx
                         PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore
                         COMPONENT_NAME Analysis)                        
-=======
+
     o2physics_add_dpl_workflow(bjet-tree-creator
                         SOURCES bjetTreeCreator.cxx
                         PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore
                         COMPONENT_NAME Analysis)
 
->>>>>>> fad503f1d0a1e01c7ac64c3de2f37e819fb72003
 endif()
