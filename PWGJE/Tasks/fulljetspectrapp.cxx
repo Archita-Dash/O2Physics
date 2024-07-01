@@ -129,14 +129,14 @@ struct FullJetSpectrapp {
       registry.add("h_full_jet_pt", "jet pT;#it{p}_{T_jet} (GeV/#it{c});entries", {HistType::kTH1F, {{350, 0., 350.}}});
       registry.add("h_full_jet_eta", "jet #eta;#eta_{jet};entries", {HistType::kTH1F, {{100, -1., 1.}}});
       registry.add("h_full_jet_phi", "jet #varphi;#varphi_{jet};entries", {HistType::kTH1F, {{160, 0., 7.}}});
-      registry.add("h3_jet_r_jet_pt_jet_neutralenergyfraction", "#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});E_{neutral}/E_{total}", {HistType::kTH3F, {{100, 0., 0.4}, {200, 0., 200.}, {120, 0.0, 1.2}}});
+      // registry.add("h3_jet_r_jet_pt_jet_neutralenergyfraction", "#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});E_{neutral}/E_{total}", {HistType::kTH3F, {{100, 0., 0.4}, {200, 0., 200.}, {120, 0.0, 1.2}}});
 
     }
     if (doprocessJetsMCP) {
       registry.add("h_full_jet_pt_part", "jet pT;#it{p}_{T_jet} (GeV/#it{c});entries", {HistType::kTH1F, {{350, 0., 350.}}});
       registry.add("h_full_jet_eta_part", "jet #eta;#eta_{jet};entries", {HistType::kTH1F, {{100, -1., 1.}}});
       registry.add("h_full_jet_phi_part", "jet #varphi;#varphi_{jet};entries", {HistType::kTH1F, {{160, 0., 7.}}});
-      registry.add("h3_jet_r_jet_pt_jet_neutralenergyfraction", "#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});E_{neutral}/E_{total}", {HistType::kTH3F, {{100, 0., 0.4}, {200, 0., 200.}, {120, 0.0, 1.2}}});
+      // registry.add("h3_jet_r_jet_pt_jet_neutralenergyfraction", "#it{R}_{jet};#it{p}_{T,jet} (GeV/#it{c});E_{neutral}/E_{total}", {HistType::kTH3F, {{100, 0., 0.4}, {200, 0., 200.}, {120, 0.0, 1.2}}});
 
     }
     //Jet Matching not yet implemented for Full Jets!!
