@@ -124,3 +124,8 @@ o2physics_add_dpl_workflow(emcal-matchedtracks-writer
                     SOURCES emcalMatchedTracksTask.cxx
                     PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2::DetectorsBase O2::EMCALBase O2::EMCALReconstruction
                     COMPONENT_NAME Analysis)
+                    
+o2physics_add_dpl_workflow(emcal-correction-cluster-hadronic-correction-task
+                    SOURCES emcalCorrectionClusterHadronicCorrectionTask.cxx
+                    PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2::DetectorsBase O2::EMCALBase O2::EMCALReconstruction
+                    COMPONENT_NAME Analysis)
