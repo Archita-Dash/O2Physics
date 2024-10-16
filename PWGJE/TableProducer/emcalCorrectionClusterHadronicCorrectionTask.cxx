@@ -202,11 +202,11 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
         // Do M02-based correction if enabled
         if (UseM02SubtractionScheme) {
           Ecluster1 = subtractM02ClusterEnergy(cluster.m02(), Ecluster1, Nmatches, totalTrkP, fHadCorr1);
-          } else {
+        } else {
               Ecluster1 = subtractClusterEnergy(Ecluster1, closestTrkP, fHadCorr1);
-          }
+        }
           //write this corrected energy to the table
-          hadroniccorrectedclusters(Ecluster1, 0.f, 0.f, 0.f);
+        hadroniccorrectedclusters(Ecluster1, 0.f, 0.f, 0.f);
       } else {
           if (UseM02SubtractionScheme) {
             EclusterAll1 = subtractM02ClusterEnergy(cluster.m02(), EclusterAll1, Nmatches, totalTrkP, fHadCorralltrks1);
@@ -303,120 +303,7 @@ double subtractM02ClusterEnergy(double m02, double Ecluster, int Nmatches, doubl
 
     return (Esub < 0) ? 0 : Esub;  // Prevent negative energy
 }
-        // else if (tracksofcluster.size() == 1 && Nmatches == 0) {
-        //   // 100% energy subtraction for only the one closest matched track. The counter "Nmatches" checks for the closest matched track.
-        //   if (((minDPhi < trackPhiHigh && minDPhi > trackPhiLow) && fabs(minDEta) < trackEta) && fHadCorr1 > 1)  {
-        //     Ecluster1 -= fHadCorr1 * mom;
-        //     // //write this corrected energy to the table
-        //     // hadroniccorrectedclusters(cluster.energy(), 0.f, 0.f, 0.f);
-        //     if (Ecluster1 < 0) Ecluster1 = 0; // Prevent negative energy
-        //   }
-        // } //Case 2 a)
 
-        // else if (tracksofcluster.size() > 1) {
-        //   // auto trackEta = match.track_as<myTracks>().eta();
-        //   // auto trackPhi = match.track_as<myTracks>().phi();
-        //   // double dPhi = trackPhi - cluster.phi();
-        //   // double dEta = trackEta - cluster.eta();
-        //   //
-        //   // if (fabs(dEta) >= minDEta || fabs(dPhi) >= minDPhi) {
-        //   //   continue;
-        //   // }
-        //
-        //   //Do pT-dependent track matching
-        //   if(doMomDepMatching)
-        //   {
-        //     trackEta  = funcPtDepEta.Eval(mom);
-        //     auto trackPhiHigh = +funcPtDepPhi.Eval(mom);
-        //     auto trackPhiLow  = -funcPtDepPhi.Eval(mom);
-        //
-        //   if ((phidiff < trackPhiHigh && phidiff > trackPhiLow) && fabs(etadiff) < trackEta) {
-        //     totalTrkP += mom;
-        //   }
-        //
-        //   // 100% energy subtraction for only the one closest matched track. The counter "Nmatches" checks for the closest matched track.
-        //   if (((minDPhi < trackPhiHigh && minDPhi > trackPhiLow) && fabs(minDEta) < trackEta) && fHadCorr1 > 1 && Nmatches == 0)  {
-        //     Ecluster1 -= fHadCorr1 * mom;
-        //     //write this corrected energy to the table
-        //     hadroniccorrectedclusters(cluster.energy(), 0.f, 0.f, 0.f);
-        //     if (Ecluster1 < 0) Ecluster1 = 0; // Prevent negative energy
-        //   }
-        //
-        //
-        //   // 100% energy subtraction for all tracks;
-        //   else if (((minDPhi < trackPhiHigh && minDPhi > trackPhiLow) && fabs(minDEta) < trackEta) && fHadCorralltrks1 > 0 && Nmatches > 0) {
-        //     auto Esub = fHadCorralltrks1 * totalTrkP;
-        //
-        //     //M02SubtractionScheme
-        //     //
-        //     if (UseM02SubtractionScheme){
-        //
-        //       // For M02 in the single photon region, the signal is primarily: Single photons, single electrons, single MIPs
-        //       if (cluster.m02() > 0.1 && cluster.m02() < 0.4) {
-        //         if (Nmatches == 0) { // Single photon (modulo tracking efficiency)
-        //           Esub = 0;
-        //         }
-        //         else {  //Single electron, single MIP
-        //           Esub = EclusterAll1;
-        //       }
-        //     }
-        //       // For large M02, the signal is primarily: Single hadronic shower, photon-photon overlap, photon-MIP overlap, MIP-MIP overlap,
-        //       // MIP-hadronic shower overlap, hadronic shower - hadronic shower overlap)
-        //       if (cluster.m02() > 0.4) {
-        //         // Single neutral hadronic shower,  photon-photon overlap, photon-neutral had shower overlap, neutral had shower overlap (modulo tracking efficiency)
-        //         if (Nmatches == 0) {
-        //           Esub = 0;
-        //         }
-        //         // Single charged hadronic shower, photon-MIP overlap, MIP-MIP overlap, MIP-had shower overlap, had shower-shower overlap
-        //         else if (Nmatches == 1) {
-        //           if (UseConstantSubtractionValue) {
-        //           Esub = fConstantSubtractionValue;
-        //           }
-        //         else {
-        //           Esub = fHadCorralltrks1 * totalTrkP;
-        //         }
-        //       }
-        //         else if (Nmatches > 1) { // MIP-MIP overlap, had shower-shower overlap
-        //           Esub = EclusterAll1;
-        //         }
-        //       }
-        //     }//end of UseM02SubtractionScheme
-        //
-        //     if (Esub > EclusterAll1) Esub = EclusterAll1;
-        //
-        //     //applying Peter's algo from Run 2 : to not subtract the full energy of the cluster
-        //     auto clusEexcl = fEexcl * cluster.nCells();
-        //
-        //     if (EclusterAll1 < clusEexcl) clusEexcl = EclusterAll1;
-        //     if ((EclusterAll1 - Esub) < clusEexcl) Esub = EclusterAll1 - clusEexcl;
-        //
-        //
-        //     EclusterAll1 -= Esub;
-        //     hadroniccorrectedclusters(0.f, 0.f, cluster.energy(), 0.f);
-        //     if (EclusterAll1 < 0) EclusterAll1 = 0;  // Prevent negative energy
-        //   }
-
-/*          if (doHadCorrSyst)  {                    // if you want to subtract 70% energy (as was in Run 2) for systematic studies
-            // 70% energy subtraction for only the one closest track
-            if (((minDPhi < trackPhiHigh && minDPhi > trackPhiLow) && fabs(minDEta) < trackEta) && fHadCorr2 > 1 && Nmatches == 0)  {
-              Ecluster2 -= fHadCorr2 * mom;
-              hadroniccorrectedclusters(0.f, cluster.energy(), 0.f, 0.f);
-              if (Ecluster2 < 0) Ecluster2 = 0;
-            }
-
-            // 70% energy subtraction for all tracks
-            else if (((minDPhi < trackPhiHigh && minDPhi > trackPhiLow) && fabs(minDEta) < trackEta) && fHadCorralltrks2 > 0 && Nmatches > 0) {
-              EclusterAll2 -= fHadCorralltrks2 * mom;
-              hadroniccorrectedclusters(0.f, 0.f, 0.f, cluster.energy());
-            }
-            if (EclusterAll2 < 0) EclusterAll2 = 0;
-          }*/
-    //     } //doMomDepMatching ends
-    //   } //CASE 2 b)
-    //     Nmatches++;
-    //   } //track loop
-    // } //cluster loop
-  // } //process function
   PROCESS_SWITCH(EmcalCorrectionClusterHadronicCorrectionTask, processMatchedCollisions, "Process matched clusters from collision", true);
 }; //end of struct
 
