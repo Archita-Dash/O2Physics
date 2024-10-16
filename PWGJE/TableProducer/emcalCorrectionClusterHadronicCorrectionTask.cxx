@@ -136,32 +136,38 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
 
       //selecting ALL MATCHED TRACKS after slicing all entries in perClusterMatchedTracks by the cluster globalIndex
       auto tracksofcluster = matchedtracks.sliceBy(perClusterMatchedTracks, cluster.globalIndex());
+
       if (tracksofcluster.size() == 0) {
-            // Skip cluster if no matched tracks
-            continue;
-        }
+        // Skip cluster if no matched tracks
+        continue;
+      }
+
       int Nmatches = 0;         // counter for closest matched track
       double closestTrkP = 0.0; // closest track momentum
       double totalTrkP = 0.0;  // total track momentum
 
-      // pT-dependent track-matching instead of PID based track-matching to be adapted from Run 2 - suggested by Markus
+      // pT-dependent track-matching instead of PID based track-matching to be adapted from Run 2 - suggested by Markus Fasel
 
       TF1 funcPtDepEta("func", "[1] + 1 / pow(x + pow(1 / ([0] - [1]), 1 / [2]), [2])");
       funcPtDepEta.SetParameters(Eta0, Eta1, Eta2);
       TF1 funcPtDepPhi("func", "[1] + 1 / pow(x + pow(1 / ([0] - [1]), 1 / [2]), [2])");
       funcPtDepEta.SetParameters(Phi0, Phi1, Phi2);
 
+      // No matched tracks (trackless case)
+      if (tracksofcluster.size() == 0) {
+        // Use original cluster energy values, no subtraction needed.
+        hadroniccorrectedclusters(Ecluster1, Ecluster2, EclusterAll1, EclusterAll2);
+        continue;
+      }
+
       //Looping over all matched tracks for the cluster
       //Total number of matched tracks = 20 (hard-coded)
       for (const auto& match : tracksofcluster) {
-        // bool doHadCorrOneTrack = false;
-        // double etadiff = 999.;
-        // double phidiff = 999.;
 
         double mom = abs(match.track_as<myTracks>().p());
         registry.fill(HIST("h_matchedtracks"), 1);
 
-        //CASE 1: skip tracks with a very low pT and don't subtract any cluster energy
+        //CASE 1: skip tracks with a very low pT 
         if (mom < 1e-6) {
           continue;
         } // end CASE 1
@@ -177,9 +183,6 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
 
         // Apply the eta and phi matching thresholds
         // dEta and dPhi cut : ensures that the matched track is within the desired eta/phi window
-        if (fabs(dEta) >= minDEta || fabs(dPhi) >= minDPhi) {
-          continue;
-        }
 
         //Do pT-dependent track matching
         if(doMomDepMatching)
@@ -195,73 +198,50 @@ struct EmcalCorrectionClusterHadronicCorrectionTask {
             totalTrkP += mom;
             Nmatches++;
           }
-        } //doMomDepMatching ends
+        } else {
+            // Do fixed dEta/dPhi matching (non-pT dependent)
+            if (fabs(dEta) >= minDEta || fabs(dPhi) >= minDPhi) {
+              continue; // Skip this track if outside the fixed cut region
+            }
+
+            // If track passes fixed dEta/dPhi cuts, process it
+            if (Nmatches == 0) {
+              closestTrkP = mom;  // Closest track match
+            }
+              totalTrkP += mom;       // Accumulate momentum
+              Nmatches++;             // Count this match
+        }
+
       }  // End of track loop
 
-      if (Nmatches == 0) {
-        // Do M02-based correction if enabled
+      // Single matched track case (Nmatches == 1)
+      if (Nmatches == 1) {
         if (UseM02SubtractionScheme) {
-          Ecluster1 = subtractM02ClusterEnergy(cluster.m02(), Ecluster1, Nmatches, totalTrkP, fHadCorr1);
+          // Do M02-based correction if enabled
+          Ecluster1 = subtractM02ClusterEnergy(cluster.m02(), Ecluster1, Nmatches, closestTrkP, fHadCorr1);
+          Ecluster2 = subtractM02ClusterEnergy(cluster.m02(), Ecluster2, Nmatches, closestTrkP, fHadCorr2);
         } else {
-              Ecluster1 = subtractClusterEnergy(Ecluster1, closestTrkP, fHadCorr1);
+            // Default energy subtraction (100% and 70%)
+            Ecluster1 = subtractClusterEnergy(Ecluster1, closestTrkP, fHadCorr1);
+            Ecluster2 = subtractClusterEnergy(Ecluster2, closestTrkP, fHadCorr2);
         }
-          //write this corrected energy to the table
-        hadroniccorrectedclusters(Ecluster1, 0.f, 0.f, 0.f);
-      } else {
-          if (UseM02SubtractionScheme) {
-            EclusterAll1 = subtractM02ClusterEnergy(cluster.m02(), EclusterAll1, Nmatches, totalTrkP, fHadCorralltrks1);
-          } else {
-              EclusterAll1 = subtractClusterEnergy(EclusterAll1, totalTrkP, fHadCorralltrks1);
-          }
-          hadroniccorrectedclusters(0.f, 0.f, EclusterAll1, 0.f);
       }
 
-      // Perform systematic corrections if enabled
-      // if you want to subtract 70% energy (as was in Run 2) for systematic studies
-      if (doHadCorrSyst) {
-        for (const auto& match : tracksofcluster) {
-          double mom = abs(match.track_as<myTracks>().p());
-
-          double dEta = match.track_as<myTracks>().eta() - cluster.eta();
-          double dPhi = TVector2::Phi_mpi_pi(match.track_as<myTracks>().phi() - cluster.phi());
-
-          if (fabs(dEta) >= minDEta || fabs(dPhi) >= minDPhi) {
-            continue;
-          }
-
-          //Do pT-dependent track matching
-          if(doMomDepMatching)
-          {
-            auto trackEtaMax  = funcPtDepEta.Eval(mom);
-            auto trackPhiHigh = +funcPtDepPhi.Eval(mom);
-            auto trackPhiLow  = -funcPtDepPhi.Eval(mom);
-
-            if ((dPhi < trackPhiHigh && dPhi > trackPhiLow) && fabs(dEta) < trackEtaMax) {
-              if (Nmatches == 0) {
-                closestTrkP = mom;
-              }
-              totalTrkP += mom;
-              Nmatches++;
-            }
-          } //doMomDepMatching ends
-        }  // track loop ends
-
-        if (Nmatches == 0) {  // 70% energy subtraction for only the one closest track
-            if (UseM02SubtractionScheme) {
-              Ecluster2 = subtractM02ClusterEnergy(cluster.m02(), Ecluster2, Nmatches, totalTrkP, fHadCorr2);
-            } else {
-                Ecluster2 = subtractClusterEnergy(Ecluster2, closestTrkP, fHadCorr2);
-            }
-            hadroniccorrectedclusters(0.f, Ecluster2, 0.f, 0.f);
-        } else {  // 70% energy subtraction for all tracks
-            if (UseM02SubtractionScheme) {
-              EclusterAll2 = subtractM02ClusterEnergy(cluster.m02(), EclusterAll2, Nmatches, totalTrkP, fHadCorralltrks2);
-            } else {
-                EclusterAll2 = subtractClusterEnergy(EclusterAll2, totalTrkP, fHadCorralltrks2);
-            }
-            hadroniccorrectedclusters(0.f, 0.f, 0.f, EclusterAll2);
+      // Multiple matched tracks case (Nmatches > 1)
+      if (Nmatches > 1) {
+        if (UseM02SubtractionScheme) {
+          // M02 subtraction scheme (analyser's discretion)
+          EclusterAll1 = subtractM02ClusterEnergy(cluster.m02(), EclusterAll1, Nmatches, totalTrkP, fHadCorralltrks1);
+          EclusterAll2 = subtractM02ClusterEnergy(cluster.m02(), EclusterAll2, Nmatches, totalTrkP, fHadCorralltrks2);
+        } else {
+            // Default energy subtraction for multiple tracks (100% and 70%)
+            EclusterAll1 = subtractClusterEnergy(EclusterAll1, totalTrkP, fHadCorralltrks1);
+            EclusterAll2 = subtractClusterEnergy(EclusterAll2, totalTrkP, fHadCorralltrks2);
         }
-      } // doHadCorrSyst ends
+      }
+
+      // Fill the table with all four corrected energies
+      hadroniccorrectedclusters(Ecluster1, Ecluster2, EclusterAll1, EclusterAll2);
 
     } // End of cluster loop
   } // process function ends
