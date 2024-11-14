@@ -61,8 +61,7 @@ using myTracks  =  o2::soa::Filtered<o2::soa::Join<o2::aod::pidTPCFullEl, o2::ao
 struct EmcalCorrectionClusterHadronicCorrectionTask {
   Produces<o2::aod::EmcalHCs> hadroniccorrectedclusters;
 
-  HistogramRegistry registry{"registry"};
-
+  HistogramRegistry registry;
   //Configurables for Histogram Binning
   // ConfigurableAxis ClsEnergyBinning{"ClsEnergyBinning", ""};
 
