@@ -322,6 +322,14 @@ struct JetFinderQATask {
     if (doprocessMCCollisionsWeighted) {
       AxisSpec weightAxis = {{VARIABLE_WIDTH, 1e-13, 1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 10.0}, "weights"};
       registry.add("h_collision_eventweight_part", "event weight;event weight;entries", {HistType::kTH1F, {weightAxis}});
+      registry.add("h_generatorsID", "GeneratorsID;GeneratorsID;entries", {HistType::kTH1F, {{200000, 1.,200000.}}});
+      registry.add("h_accepted", "No. of Generated Events;No. of Generated Events;entries", {HistType::kTH1F, {{100, -2.,2.}}});
+      registry.add("h_attempted","No. of Attempted Events;No. of Attempted Events;entries", {HistType::kTH1F, {{100, -2.,2.}}});
+      registry.add("h_xsecGen", "Cross section in pb; Cross section in pb; entries", {HistType::kTH1F, {{200000, -0.5,200000.}}});
+      registry.add("h_xsecErr", "Error associated with the cross section", {HistType::kTH1F, {{200000, -0.5,200000.}}});
+      registry.add("h_ptHard", "ptHard; ptHard; entries", {HistType::kTH1F, {{1000, 0.,1000.}}});
+      registry.add("h_nMPI", "nMPI; nMPI; entries", {HistType::kTH1F, {{1000, 0.,1000}}});
+      registry.add("h_xsecGenSum", "Summed Cross section per collision in pb; Summed Cross section per collision in pb; entries", {HistType::kTH1F, {{100, 0.,1.}}});
     }
   }
 
@@ -924,7 +932,20 @@ struct JetFinderQATask {
 
   void processMCCollisionsWeighted(aod::JetMcCollision const& collision)
   {
+    // auto xsecGenSum = 0.0;
+    // xsecGenSum += collision.xsectGen();
+    // std::cout << collision.xsectGen() << std::endl;
+    // std::cout << collision.generatorsID() << std::endl;
+    // std::cout << collision.getGeneratorId() << std::endl;
     registry.fill(HIST("h_collision_eventweight_part"), collision.weight());
+    registry.fill(HIST("h_generatorsID"), collision.getGeneratorId());
+    registry.fill(HIST("h_accepted"), collision.accepted());
+    registry.fill(HIST("h_attempted"), collision.attempted());
+    registry.fill(HIST("h_xsecGen"), collision.xsectGen());
+    registry.fill(HIST("h_xsecErr"), collision.xsectErr());
+    registry.fill(HIST("h_ptHard"), collision.ptHard());
+    registry.fill(HIST("h_nMPI"), collision.nMPI());
+    registry.fill(HIST("h_xsecGenSum"),0.5, collision.xsectGen());
   }
   PROCESS_SWITCH(JetFinderQATask, processMCCollisionsWeighted, "collision QA for weighted events", false);
 

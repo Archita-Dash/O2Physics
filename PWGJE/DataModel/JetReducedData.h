@@ -148,14 +148,32 @@ DECLARE_SOA_INDEX_COLUMN(McCollision, mcCollision);
 DECLARE_SOA_COLUMN(PosX, posX, float);
 DECLARE_SOA_COLUMN(PosY, posY, float);
 DECLARE_SOA_COLUMN(PosZ, posZ, float);
+DECLARE_SOA_COLUMN(GeneratorsID, generatorsID, short);
 DECLARE_SOA_COLUMN(Weight, weight, float);
+DECLARE_SOA_COLUMN(Accepted, accepted, uint64_t);
+DECLARE_SOA_COLUMN(Attempted, attempted, uint64_t);
+DECLARE_SOA_COLUMN(XsectGen, xsectGen, float);
+DECLARE_SOA_COLUMN(XsectErr, xsectErr, float);
+DECLARE_SOA_COLUMN(PtHard, ptHard, float);
+DECLARE_SOA_COLUMN(NMPI, nMPI, int);
+DECLARE_SOA_DYNAMIC_COLUMN(GetGeneratorId, getGeneratorId,
+                           [](short generatorsID) -> int { return o2::mcgenid::getGeneratorId(generatorsID); });
 } // namespace jmccollision
 DECLARE_SOA_TABLE_STAGED(JMcCollisions, "JMCCOLLISION",
                          o2::soa::Index<>,
                          jmccollision::PosX,
                          jmccollision::PosY,
                          jmccollision::PosZ,
-                         jmccollision::Weight);
+                         jmccollision::GeneratorsID,
+                         jmccollision::Weight,
+                         jmccollision::Accepted,
+                         jmccollision::Attempted,
+                         jmccollision::XsectGen,
+                         jmccollision::XsectErr,
+                         jmccollision::PtHard,
+                         jmccollision::NMPI,
+                         jmccollision::GetGeneratorId<jmccollision::GeneratorsID>);
+
 
 using JMcCollision = JMcCollisions::iterator;
 using StoredJMcCollision = StoredJMcCollisions::iterator;
