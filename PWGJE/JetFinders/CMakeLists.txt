@@ -86,7 +86,6 @@ o2physics_add_dpl_workflow(jet-finder-lc-mcd-charged
 
 o2physics_add_dpl_workflow(jet-finder-lc-mcp-charged
                     SOURCES jetFinderLcMCPCharged.cxx
-<<<<<<< HEAD
                     PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore O2::FrameworkPhysicsSupport
                     COMPONENT_NAME Analysis)
 
@@ -102,8 +101,6 @@ o2physics_add_dpl_workflow(jet-finder-bplus-mcd-charged
 
 o2physics_add_dpl_workflow(jet-finder-bplus-mcp-charged
                     SOURCES jetFinderBplusMCPCharged.cxx
-=======
->>>>>>> 9775f61ee ([PWGJE] Splitdevices (#8668))
                     PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore O2::FrameworkPhysicsSupport
                     COMPONENT_NAME Analysis)
 
