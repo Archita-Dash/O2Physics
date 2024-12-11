@@ -38,6 +38,7 @@ o2physics_add_dpl_workflow(jet-matching-mc-lc-ch
                     PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore O2::FrameworkPhysicsSupport
                     COMPONENT_NAME Analysis)
 
+
 o2physics_add_dpl_workflow(jet-matching-mc-bplus-ch
                     SOURCES jetMatchingMCBplusCharged.cxx
                     PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore O2::FrameworkPhysicsSupport
