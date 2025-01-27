@@ -287,7 +287,11 @@ struct EmcalClusterHadronicCorrectionTask {
 
     // For M02 in the single photon region, the signal is primarily: Single photons, single electrons, single MIPs
     if (m02 > 0.1 && m02 < 0.4) { // circular clusters(electron/photon)
+<<<<<<< HEAD
       Ecorr = 0;                  // Single electron, single MIP
+=======
+      Ecorr = Ecluster;           // Single electron, single MIP
+>>>>>>> 25236bd08 (Please consider the following formatting changes)
     } else if (m02 > 0.4) {
       // Large M02 region (M02 > 0.4), more complex overlaps and hadronic showers.
       // The signal is primarily: Single hadronic shower, photon-photon overlap, photon-MIP overlap, MIP-MIP overlap,
