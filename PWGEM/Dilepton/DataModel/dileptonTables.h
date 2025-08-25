@@ -33,7 +33,7 @@ namespace pwgem::dilepton::swt
 {
 enum class swtAliases : int { // software trigger aliases for EM
   kHighTrackMult = 0,
-  kHighFt0Mult,
+  kHighFt0cFv0Mult,
   kSingleE,
   kLMeeIMR,
   kLMeeHMR,
@@ -41,13 +41,12 @@ enum class swtAliases : int { // software trigger aliases for EM
   kSingleMuLow,
   kSingleMuHigh,
   kDiMuon,
-  kHighFt0cFv0Mult,
   kNaliases
 };
 
 const std::unordered_map<std::string, int> aliasLabels = {
   {"fHighTrackMult", static_cast<int>(o2::aod::pwgem::dilepton::swt::swtAliases::kHighTrackMult)},
-  {"fHighFt0Mult", static_cast<int>(o2::aod::pwgem::dilepton::swt::swtAliases::kHighFt0Mult)},
+  {"fHighFt0cFv0Mult", static_cast<int>(o2::aod::pwgem::dilepton::swt::swtAliases::kHighFt0cFv0Mult)},
   {"fSingleE", static_cast<int>(o2::aod::pwgem::dilepton::swt::swtAliases::kSingleE)},
   {"fLMeeIMR", static_cast<int>(o2::aod::pwgem::dilepton::swt::swtAliases::kLMeeIMR)},
   {"fLMeeHMR", static_cast<int>(o2::aod::pwgem::dilepton::swt::swtAliases::kLMeeHMR)},
@@ -55,19 +54,8 @@ const std::unordered_map<std::string, int> aliasLabels = {
   {"fSingleMuLow", static_cast<int>(o2::aod::pwgem::dilepton::swt::swtAliases::kSingleMuLow)},
   {"fSingleMuHigh", static_cast<int>(o2::aod::pwgem::dilepton::swt::swtAliases::kSingleMuHigh)},
   {"fDiMuon", static_cast<int>(o2::aod::pwgem::dilepton::swt::swtAliases::kDiMuon)},
-  {"fHighFt0cFv0Mult", static_cast<int>(o2::aod::pwgem::dilepton::swt::swtAliases::kHighFt0cFv0Mult)},
 };
 } // namespace pwgem::dilepton::swt
-
-// namespace embc
-// {
-// DECLARE_SOA_COLUMN(IsTriggerTVX, isTriggerTVX, bool);                 //! kIsTriggerTVX
-// DECLARE_SOA_COLUMN(IsNoTimeFrameBorder, isNoTimeFrameBorder, bool);   //! kIsNoTimeFrameBorder
-// DECLARE_SOA_COLUMN(IsNoITSROFrameBorder, isNoITSROFrameBorder, bool); //! kNoITSROFrameBorder
-// DECLARE_SOA_COLUMN(IsCollisionFound, isCollisionFound, bool);         //! at least 1 collision is found in this BC.
-// } // namespace embc
-// DECLARE_SOA_TABLE(EMBCs, "AOD", "EMBC", //! bc information for normalization
-//                  o2::soa::Index<>, embc::IsTriggerTVX, embc::IsNoTimeFrameBorder, embc::IsNoITSROFrameBorder, embc::IsCollisionFound);
 
 DECLARE_SOA_TABLE(EMBCs, "AOD", "EMBC", //! bc information for normalization
                   o2::soa::Index<>, evsel::Alias, evsel::Selection, evsel::Rct);
@@ -641,6 +629,11 @@ using EMPrimaryElectronsCov = EMPrimaryElectronsCov_001;
 // iterators
 using EMPrimaryElectronCov = EMPrimaryElectronsCov::iterator;
 
+DECLARE_SOA_TABLE_VERSIONED(EMPrimaryElectronsDeDxMC_000, "AOD", "EMPRMELDEDXMC", 0, mcpidtpc::DeDxTunedMc, o2::soa::Marker<1>);
+using EMPrimaryElectronsDeDxMC = EMPrimaryElectronsDeDxMC_000;
+// iterators
+using EMPrimaryElectronDeDxMC = EMPrimaryElectronsDeDxMC::iterator;
+
 DECLARE_SOA_TABLE(EMPrimaryElectronEMEventIds, "AOD", "PRMELMEVENTID", emprimaryelectron::EMEventId); // To be joined with EMPrimaryElectrons table at analysis level.
 // iterators
 using EMPrimaryElectronEMEventId = EMPrimaryElectronEMEventIds::iterator;
@@ -757,19 +750,34 @@ DECLARE_SOA_TABLE(EMGlobalMuonSelfIds, "AOD", "EMGLMUSELFID", emprimarymuon::Glo
 // iterators
 using EMGlobalMuonSelfId = EMGlobalMuonSelfIds::iterator;
 
+namespace oldemprimarytrack
+{
+DECLARE_SOA_COLUMN(Sign, sign, int8_t);
+} // namespace oldemprimarytrack
+
 namespace emprimarytrack
 {
 DECLARE_SOA_INDEX_COLUMN(EMEvent, emevent);        //!
 DECLARE_SOA_COLUMN(CollisionId, collisionId, int); //!
 DECLARE_SOA_COLUMN(TrackId, trackId, int);         //!
-DECLARE_SOA_COLUMN(Sign, sign, int8_t);            //!
 DECLARE_SOA_COLUMN(TrackBit, trackBit, uint16_t);  //!
+DECLARE_SOA_COLUMN(Signed1Pt, signed1Pt, float);   //! (sign of charge)/Pt in c/GeV. Use pt() and sign() instead
+DECLARE_SOA_COLUMN(Eta, eta, float);               //!
+DECLARE_SOA_COLUMN(Phi, phi, float);               //!
+DECLARE_SOA_DYNAMIC_COLUMN(Pt, pt, [](float signed1Pt) -> float { return 1.f / std::fabs(signed1Pt); });
+DECLARE_SOA_DYNAMIC_COLUMN(Sign, sign, [](float signed1Pt) -> short { return (signed1Pt > 0) ? 1 : -1; }); //! Charge: positive: 1, negative: -1
 } // namespace emprimarytrack
 
 DECLARE_SOA_TABLE_VERSIONED(EMPrimaryTracks_000, "AOD", "EMPRIMARYTRACK", 0, //! primary charged track table for 2PC
-                            o2::soa::Index<>, emprimarytrack::CollisionId, emprimarytrack::TrackId, emprimarytrack::Sign, track::Pt, track::Eta, track::Phi, emprimarytrack::TrackBit);
+                            o2::soa::Index<>, emprimarytrack::CollisionId, emprimarytrack::TrackId, oldemprimarytrack::Sign, track::Pt, track::Eta, track::Phi, emprimarytrack::TrackBit);
 
-using EMPrimaryTracks = EMPrimaryTracks_000;
+DECLARE_SOA_TABLE_VERSIONED(EMPrimaryTracks_001, "AOD", "EMPRIMARYTRACK", 1, //! primary charged track table for 2PC
+                            o2::soa::Index<>, emprimarytrack::CollisionId, emprimarytrack::TrackId,
+                            emprimarytrack::Signed1Pt, emprimarytrack::Eta, emprimarytrack::Phi, emprimarytrack::TrackBit,
+                            // dynamic column
+                            emprimarytrack::Sign<emprimarytrack::Signed1Pt>, emprimarytrack::Pt<emprimarytrack::Signed1Pt>);
+
+using EMPrimaryTracks = EMPrimaryTracks_001;
 // iterators
 using EMPrimaryTrack = EMPrimaryTracks::iterator;
 
