@@ -19,7 +19,8 @@
 #include "Common/DataModel/Centrality.h"
 #include "Common/DataModel/EventSelection.h"
 #include "Common/DataModel/Multiplicity.h"
-#include "Common/DataModel/PIDResponse.h"
+#include "Common/DataModel/PIDResponseTOF.h"
+#include "Common/DataModel/PIDResponseTPC.h"
 #include "Common/DataModel/TrackSelectionTables.h"
 
 #include "CCDB/BasicCCDBManager.h"
@@ -113,6 +114,7 @@ struct phianalysisrun3_PbPb {
   Configurable<float> confMaxRot{"confMaxRot", 7.0f * 3.14159265f / 6.0f, "Maximum of rotation"};
   Configurable<bool> pdgcheck{"pdgcheck", true, "pdgcheck"};
   Configurable<bool> reco{"reco", true, "reco"};
+  Configurable<bool> cfgDoSel8{"cfgDoSel8", true, "Apply sel8 selection"};
   ConfigurableAxis ptAxisphi{"ptAxisphi", {200, 0.0f, 20.0f}, "phi pT axis"};
   ConfigurableAxis centAxisphi{"centAxisphi", {200, 0.0, 200.0}, "phi centrality axis"};
   ConfigurableAxis massAxisphi{"massAxisphi", {200, 0.9, 1.1}, "phi mass axis"};
@@ -120,7 +122,8 @@ struct phianalysisrun3_PbPb {
   ConfigurableAxis binsImpactPar{"binsImpactPar", {VARIABLE_WIDTH, 0, 3.5, 5.67, 7.45, 8.85, 10.0, 11.21, 12.26, 13.28, 14.23, 15.27}, "Binning of the impact parameter axis"};
   ConfigurableAxis binsPt{"binsPt", {VARIABLE_WIDTH, 0.0, 0.1, 0.2, 0.3, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 7.0, 8.0, 10.0, 12.0}, "Binning of the pT axis"};
   ConfigurableAxis binsCent{"binsCent", {VARIABLE_WIDTH, 0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0}, "Binning of the centrality axis"};
-  Configurable<int> cfgCutOccupancy{"cfgCutOccupancy", 3000, "Occupancy cut"};
+  Configurable<int> cfgMinOccupancy{"cfgMinOccupancy", 0, "Minimum occupancy cut"};
+  Configurable<int> cfgMaxOccupancy{"cfgMaxOccupancy", 3000, "Maximum occupancy cut"};
   Configurable<int> centestimator{"centestimator", 0, "Select multiplicity estimator: 0 - FT0C, 1 - FT0A, 2 - FT0M, 3 - FV0A, 4 - PVTracks"};
 
   Configurable<bool> genacceptancecut{"genacceptancecut", true, "use acceptance cut for generated"};
@@ -346,7 +349,7 @@ struct phianalysisrun3_PbPb {
     if (additionalEvSel6 && !collision.selection_bit(o2::aod::evsel::kIsGoodZvtxFT0vsPV))
       return false;
     int occupancy = collision.trackOccupancyInTimeRange();
-    if (fillOccupancy && (occupancy > cfgCutOccupancy))
+    if (fillOccupancy && (occupancy < cfgMinOccupancy || occupancy > cfgMaxOccupancy))
       return false;
 
     return true;
@@ -469,7 +472,7 @@ struct phianalysisrun3_PbPb {
     }
     histos.fill(HIST("hEvtSelInfo"), 8.5);
     int occupancy = collision.trackOccupancyInTimeRange();
-    if (fillOccupancy && (occupancy > cfgCutOccupancy)) {
+    if (fillOccupancy && (occupancy < cfgMinOccupancy || occupancy > cfgMaxOccupancy)) {
       return;
     }
     histos.fill(HIST("hEvtSelInfo"), 9.5);
@@ -626,7 +629,9 @@ struct phianalysisrun3_PbPb {
       int occupancy1 = c1.trackOccupancyInTimeRange();
       int occupancy2 = c2.trackOccupancyInTimeRange();
 
-      if (fillOccupancy && (occupancy1 > cfgCutOccupancy || occupancy2 > cfgCutOccupancy)) {
+      if (fillOccupancy &&
+          ((occupancy1 < cfgMinOccupancy || occupancy1 > cfgMaxOccupancy) ||
+           (occupancy2 < cfgMinOccupancy || occupancy2 > cfgMaxOccupancy))) {
         continue;
       }
       float multiplicity;
@@ -695,7 +700,9 @@ struct phianalysisrun3_PbPb {
       int occupancy1 = c1.trackOccupancyInTimeRange();
       int occupancy2 = c2.trackOccupancyInTimeRange();
 
-      if (fillOccupancy && (occupancy1 > cfgCutOccupancy || occupancy2 > cfgCutOccupancy)) {
+      if (fillOccupancy &&
+          ((occupancy1 < cfgMinOccupancy || occupancy1 > cfgMaxOccupancy) ||
+           (occupancy2 < cfgMinOccupancy || occupancy2 > cfgMaxOccupancy))) {
         continue;
       }
       float multiplicity;
@@ -765,7 +772,9 @@ struct phianalysisrun3_PbPb {
       int occupancy1 = c1.trackOccupancyInTimeRange();
       int occupancy2 = c2.trackOccupancyInTimeRange();
 
-      if (fillOccupancy && (occupancy1 > cfgCutOccupancy || occupancy2 > cfgCutOccupancy)) {
+      if (fillOccupancy &&
+          ((occupancy1 < cfgMinOccupancy || occupancy1 > cfgMaxOccupancy) ||
+           (occupancy2 < cfgMinOccupancy || occupancy2 > cfgMaxOccupancy))) {
         continue;
       }
       float multiplicity;
@@ -835,7 +844,9 @@ struct phianalysisrun3_PbPb {
       int occupancy1 = c1.trackOccupancyInTimeRange();
       int occupancy2 = c2.trackOccupancyInTimeRange();
 
-      if (fillOccupancy && (occupancy1 > cfgCutOccupancy || occupancy2 > cfgCutOccupancy)) {
+      if (fillOccupancy &&
+          ((occupancy1 < cfgMinOccupancy || occupancy1 > cfgMaxOccupancy) ||
+           (occupancy2 < cfgMinOccupancy || occupancy2 > cfgMaxOccupancy))) {
         continue;
       }
       float multiplicity;
@@ -877,7 +888,7 @@ struct phianalysisrun3_PbPb {
       return;
     }
     int occupancy = collision.trackOccupancyInTimeRange();
-    if (fillOccupancy && (occupancy > cfgCutOccupancy)) {
+    if (fillOccupancy && (occupancy < cfgMinOccupancy || occupancy > cfgMaxOccupancy)) {
       return;
     }
     float multiplicity{-1};
@@ -964,9 +975,13 @@ struct phianalysisrun3_PbPb {
     }
     for (const auto& RecCollision : RecCollisions) {
       histos.fill(HIST("hMC"), 3);
-      if (!RecCollision.sel8() || std::abs(RecCollision.posZ()) > cfgCutVertex) {
+      if (cfgDoSel8 && !RecCollision.sel8()) {
         continue;
       }
+      if (std::abs(RecCollision.posZ()) > cfgCutVertex) {
+        continue;
+      }
+
       histos.fill(HIST("hMC"), 4);
       if (additionalEvSel1 && !RecCollision.selection_bit(aod::evsel::kNoTimeFrameBorder)) {
         continue;
@@ -993,7 +1008,7 @@ struct phianalysisrun3_PbPb {
       }
       histos.fill(HIST("hMC"), 10);
       int occupancy = RecCollision.trackOccupancyInTimeRange();
-      if (fillOccupancy && (occupancy > cfgCutOccupancy)) {
+      if (fillOccupancy && (occupancy < cfgMinOccupancy || occupancy > cfgMaxOccupancy)) {
         continue;
       }
       histos.fill(HIST("hMC"), 11);
@@ -1173,14 +1188,18 @@ struct phianalysisrun3_PbPb {
     int nevts = 0;
     auto multiplicity = 0;
     for (const auto& collision : collisions) {
-      if (!collision.sel8() || std::abs(collision.mcCollision().posZ()) > cfgCutVertex) {
+      if (cfgDoSel8 && !collision.sel8()) {
         continue;
       }
+      if (std::abs(collision.mcCollision().posZ()) > cfgCutVertex) {
+        continue;
+      }
+
       if (additionalEvSel2 && (!collision.selection_bit(aod::evsel::kNoSameBunchPileup) || !collision.selection_bit(aod::evsel::kIsGoodZvtxFT0vsPV))) {
         continue;
       }
       int occupancy = collision.trackOccupancyInTimeRange();
-      if (fillOccupancy && (occupancy > cfgCutOccupancy)) {
+      if (fillOccupancy && (occupancy < cfgMinOccupancy || occupancy > cfgMaxOccupancy)) {
         continue;
       }
       histos.fill(HIST("hOccupancy1"), occupancy);
@@ -1249,14 +1268,18 @@ struct phianalysisrun3_PbPb {
     if (!collision.has_mcCollision()) {
       return;
     }
-    if (std::abs(collision.mcCollision().posZ()) > cfgCutVertex || !collision.sel8()) {
+    if (cfgDoSel8 && !collision.sel8()) {
       return;
     }
+    if (std::abs(collision.mcCollision().posZ()) > cfgCutVertex) {
+      return;
+    }
+
     if (additionalEvSel2 && (!collision.selection_bit(aod::evsel::kNoSameBunchPileup) || !collision.selection_bit(aod::evsel::kIsGoodZvtxFT0vsPV))) {
       return;
     }
     int occupancy = collision.trackOccupancyInTimeRange();
-    if (fillOccupancy && (occupancy > cfgCutOccupancy)) {
+    if (fillOccupancy && (occupancy < cfgMinOccupancy || occupancy > cfgMaxOccupancy)) {
       return;
     }
     auto multiplicity = collision.centFT0C();
@@ -1393,7 +1416,7 @@ struct phianalysisrun3_PbPb {
       return;
     }
     int occupancy = collision.trackOccupancyInTimeRange();
-    if (fillOccupancy && (occupancy > cfgCutOccupancy)) {
+    if (fillOccupancy && (occupancy < cfgMinOccupancy || occupancy > cfgMaxOccupancy)) {
       return;
     }
     float multiplicity{-1};
@@ -1515,12 +1538,13 @@ struct phianalysisrun3_PbPb {
       }
       int occupancy1 = c1.trackOccupancyInTimeRange();
       int occupancy2 = c2.trackOccupancyInTimeRange();
-      if (fillOccupancy && (occupancy1 > cfgCutOccupancy)) {
+      if (fillOccupancy && (occupancy1 < cfgMinOccupancy || occupancy1 > cfgMaxOccupancy)) {
         continue;
       }
-      if (fillOccupancy && (occupancy2 > cfgCutOccupancy)) {
+      if (fillOccupancy && (occupancy2 < cfgMinOccupancy || occupancy2 > cfgMaxOccupancy)) {
         continue;
       }
+
       auto multiplicity = c1.centFT0C();
       histos.fill(HIST("Centmix"), multiplicity);
       for (const auto& [t1, t2] : o2::soa::combinations(o2::soa::CombinationsFullIndexPolicy(tracks1, tracks2))) {
@@ -1574,11 +1598,15 @@ struct phianalysisrun3_PbPb {
     std::vector<int64_t> selectedEvents(collisions.size());
     int nevts = 0;
     auto multiplicity = -1.0;
-    histos.fill(HIST("hMC1"), 2.5);
     for (const auto& collision : collisions) {
-      if (!collision.sel8() || std::abs(collision.mcCollision().posZ()) > cfgCutVertex) {
+      histos.fill(HIST("hMC1"), 2.5);
+      if (cfgDoSel8 && !collision.sel8()) {
         continue;
       }
+      if (std::abs(collision.mcCollision().posZ()) > cfgCutVertex) {
+        continue;
+      }
+
       histos.fill(HIST("hMC1"), 3.5);
       if (additionalEvSel1 && !collision.selection_bit(aod::evsel::kNoTimeFrameBorder)) {
         continue;
@@ -1605,7 +1633,7 @@ struct phianalysisrun3_PbPb {
       }
       histos.fill(HIST("hMC1"), 9.5);
       int occupancy = collision.trackOccupancyInTimeRange();
-      if (fillOccupancy && (occupancy > cfgCutOccupancy)) {
+      if (fillOccupancy && (occupancy < cfgMinOccupancy || occupancy > cfgMaxOccupancy)) {
         continue;
       }
       histos.fill(HIST("hMC1"), 10.5);
@@ -1674,7 +1702,10 @@ struct phianalysisrun3_PbPb {
     if (!collision.has_mcCollision()) {
       return;
     }
-    if (std::abs(collision.mcCollision().posZ()) > cfgCutVertex || !collision.sel8()) {
+    if (cfgDoSel8 && !collision.sel8()) {
+      return;
+    }
+    if (std::abs(collision.mcCollision().posZ()) > cfgCutVertex) {
       return;
     }
     if (additionalEvSel1 && !collision.selection_bit(aod::evsel::kNoTimeFrameBorder)) {
@@ -1699,7 +1730,7 @@ struct phianalysisrun3_PbPb {
       return;
     }
     int occupancy = collision.trackOccupancyInTimeRange();
-    if (fillOccupancy && (occupancy > cfgCutOccupancy)) {
+    if (fillOccupancy && (occupancy < cfgMinOccupancy || occupancy > cfgMaxOccupancy)) {
       return;
     }
     const int kCentFT0C = 0;

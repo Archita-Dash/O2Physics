@@ -31,11 +31,10 @@
 
 namespace o2::aod
 {
-
 namespace femtocollisions
 {
-DECLARE_SOA_COLUMN(CollisionMask, collisionMask, femtodatatypes::CollisionMaskType); //! Bitmask for collision selections
-DECLARE_SOA_COLUMN(CollisionTag, collisionTag, femtodatatypes::CollisionTagType);    //! Bitmask for collision selections
+DECLARE_SOA_COLUMN(Mask, mask, femtodatatypes::CollisionMaskType);                //! Bitmask for collision selections
+DECLARE_SOA_COLUMN(CollisionTag, collisionTag, femtodatatypes::CollisionTagType); //! Bitmask for collision selections
 
 DECLARE_SOA_COLUMN(PosX, posX, float);             //! x coordinate of vertex
 DECLARE_SOA_COLUMN(PosY, posY, float);             //! y coordinate of vertex
@@ -55,12 +54,12 @@ DECLARE_SOA_TABLE_STAGED_VERSIONED(FCols_001, "FCOL", 1, //! femto collisions
                                    femtocollisions::Cent,
                                    femtocollisions::MagField);
 using FCols = FCols_001;
+using FCol = FCols::iterator;
 using StoredFCols = StoredFCols_001;
-using FCol = FCols::iterator; // needed so we can define the index column further down properly
 
 // table for collisions selections
 DECLARE_SOA_TABLE_STAGED_VERSIONED(FColMasks_001, "FCOLMASK", 1, //! track masks
-                                   femtocollisions::CollisionMask);
+                                   femtocollisions::Mask);
 using FColMasks = FColMasks_001;
 using StoredFColMasks = StoredFColMasks_001;
 
@@ -148,7 +147,7 @@ DECLARE_SOA_DYNAMIC_COLUMN(Theta, theta, //! theta
 namespace femtotracks
 {
 // columns for track selections
-DECLARE_SOA_COLUMN(TrackMask, trackMask, femtodatatypes::TrackMaskType); //! Bitmask for track selections
+DECLARE_SOA_COLUMN(Mask, mask, femtodatatypes::TrackMaskType); //! Bitmask for track selections
 
 // columns for DCA
 DECLARE_SOA_COLUMN(DcaXY, dcaXY, float);                                                                        //! Dca in XY plane
@@ -239,11 +238,12 @@ DECLARE_SOA_TABLE_STAGED_VERSIONED(FTracks_001, "FTRACK", 1, //! femto tracks
                                    femtobase::dynamic::Pz<femtobase::stored::SignedPt, femtobase::stored::Eta>,
                                    femtobase::dynamic::Theta<femtobase::stored::Eta>);
 using FTracks = FTracks_001;
+using FTrack = FTracks::iterator;
 using StoredFTracks = StoredFTracks_001;
 
 // table for track selections and PID selections
 DECLARE_SOA_TABLE_STAGED_VERSIONED(FTrackMasks_001, "FTRACKMASK", 1, //! track masks
-                                   femtotracks::TrackMask);
+                                   femtotracks::Mask);
 using FTrackMasks = FTrackMasks_001;
 using StoredFTrackMasks = StoredFTrackMasks_001;
 
@@ -513,7 +513,7 @@ DECLARE_SOA_COLUMN(TransRadius, transRadius, float); //! Transverse decay radius
 DECLARE_SOA_INDEX_COLUMN_FULL(ChaDau, chaDau, int32_t, FTracks, "_ChaDau"); //!
 } // namespace femtokinks
 
-// table for basic sigma minus information
+// table for basic sigma information
 DECLARE_SOA_TABLE_STAGED_VERSIONED(FSigmas_001, "FSIGMA", 1,
                                    o2::soa::Index<>,
                                    femtobase::stored::FColId, // use sign to differentiate between sigma minus (-1) and anti sigma minus (+1)
@@ -545,6 +545,39 @@ DECLARE_SOA_TABLE_STAGED_VERSIONED(FSigmaExtras_001, "FSIGMAEXTRAS", 1,
                                    femtokinks::TransRadius);
 
 using FSigmaExtras = FSigmaExtras_001;
+
+// table for basic sigma plus information
+DECLARE_SOA_TABLE_STAGED_VERSIONED(FSigmaPlus_001, "FSIGMAPLUS", 1,
+                                   o2::soa::Index<>,
+                                   femtobase::stored::FColId, // use sign to differentiate between sigma minus (-1) and anti sigma minus (+1)
+                                   femtobase::stored::SignedPt,
+                                   femtobase::stored::Eta,
+                                   femtobase::stored::Phi,
+                                   femtobase::stored::Mass,
+                                   femtokinks::ChaDauId,
+                                   femtobase::dynamic::Sign<femtobase::stored::SignedPt>,
+                                   femtobase::dynamic::Pt<femtobase::stored::SignedPt>,
+                                   femtobase::dynamic::P<femtobase::stored::SignedPt, femtobase::stored::Eta>,
+                                   femtobase::dynamic::Px<femtobase::stored::SignedPt, femtobase::stored::Phi>,
+                                   femtobase::dynamic::Py<femtobase::stored::SignedPt, femtobase::stored::Phi>,
+                                   femtobase::dynamic::Pz<femtobase::stored::SignedPt, femtobase::stored::Eta>,
+                                   femtobase::dynamic::Theta<femtobase::stored::Eta>);
+using FSigmaPlus = FSigmaPlus_001;
+
+DECLARE_SOA_TABLE_STAGED_VERSIONED(FSigmaPlusMasks_001, "FSIGMAPLUSMASKS", 1,
+                                   femtokinks::Mask);
+using FSigmaPlusMasks = FSigmaPlusMasks_001;
+
+DECLARE_SOA_TABLE_STAGED_VERSIONED(FSigmaPlusExtras_001, "FSIGMAPLUSEXTRAS", 1,
+                                   femtokinks::KinkAngle,
+                                   femtokinks::DcaDaugToPV,
+                                   femtokinks::DcaMothToPV,
+                                   femtokinks::DecayVtxX,
+                                   femtokinks::DecayVtxY,
+                                   femtokinks::DecayVtxZ,
+                                   femtokinks::TransRadius);
+
+using FSigmaPlusExtras = FSigmaPlusExtras_001;
 
 namespace femtocascades
 {

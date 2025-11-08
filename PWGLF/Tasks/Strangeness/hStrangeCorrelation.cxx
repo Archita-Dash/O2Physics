@@ -26,7 +26,6 @@
 #include "Common/DataModel/Centrality.h"
 #include "Common/DataModel/EventSelection.h"
 #include "Common/DataModel/Multiplicity.h"
-#include "Common/DataModel/PIDResponse.h"
 #include "Common/DataModel/TrackSelectionTables.h"
 #include "EventFiltering/Zorro.h"
 #include "EventFiltering/ZorroSummary.h"
@@ -70,6 +69,7 @@ struct HStrangeCorrelation {
 
   // master analysis switches
   Configurable<bool> doPPAnalysis{"doPPAnalysis", true, "if in pp, set to true"};
+  Configurable<bool> doFullCorrelationStudy{"doFullCorrelationStudy", true, "if true, do full correlation study by creating all THnSparse histograms for the correlation function"};
   Configurable<bool> doCorrelationHadron{"doCorrelationHadron", false, "do Hadron correlation"};
   Configurable<bool> doCorrelationK0Short{"doCorrelationK0Short", true, "do K0Short correlation"};
   Configurable<bool> doCorrelationLambda{"doCorrelationLambda", false, "do Lambda correlation"};
@@ -133,6 +133,7 @@ struct HStrangeCorrelation {
     Configurable<bool> applyEfficiencyPropagation{"applyEfficiencyPropagation", false, "propagate also the efficiency uncertainty"};
     Configurable<bool> applyPurityHadron{"applyPurityHadron", false, "apply the purity correction for associated hadrons"};
     Configurable<bool> applyPurityTrigger{"applyPurityTrigger", false, "apply the purity correction for trigger particle"};
+    Configurable<bool> applyEffAsFunctionOfMult{"applyEffAsFunctionOfMult", false, "apply efficiency as a function of multiplicity as well"};
   } efficiencyFlags;
   Configurable<std::string> ccdburl{"ccdburl", "http://alice-ccdb.cern.ch", "url of the ccdb repository to use"};
   Configurable<std::string> efficiencyCCDBPath{"efficiencyCCDBPath", "GLO/Config/GeometryAligned", "Path of the efficiency corrections"};
@@ -215,6 +216,7 @@ struct HStrangeCorrelation {
 
   // objects to use for efficiency corrections
   TH2F* hEfficiencyTrigger;
+  TH3F* hEfficiencyTriggerMult;
   TH2F* hEfficiencyPion;
   TH2F* hEfficiencyK0Short;
   TH2F* hEfficiencyLambda;
@@ -224,9 +226,12 @@ struct HStrangeCorrelation {
   TH2F* hEfficiencyOmegaMinus;
   TH2F* hEfficiencyOmegaPlus;
   TH2F* hEfficiencyHadron;
+  TH3F* hEfficiencyHadronMult;
   TH1F* hPurityHadron;
+  TH2F* hPurityHadronMult;
   // objects to propagate the efficiency uncertainty
   TH2F* hEfficiencyUncertaintyTrigger;
+  TH3F* hEfficiencyUncertaintyTriggerMult;
   TH2F* hEfficiencyUncertaintyPion;
   TH2F* hEfficiencyUncertaintyK0Short;
   TH2F* hEfficiencyUncertaintyLambda;
@@ -236,7 +241,9 @@ struct HStrangeCorrelation {
   TH2F* hEfficiencyUncertaintyOmegaMinus;
   TH2F* hEfficiencyUncertaintyOmegaPlus;
   TH2F* hEfficiencyUncertaintyHadron;
+  TH3F* hEfficiencyUncertaintyHadronMult;
   TH1F* hPurityUncertaintyHadron;
+  TH2F* hPurityUncertaintyHadronMult;
 
   using BinningType = ColumnBinningPolicy<aod::collision::PosZ, aod::cent::CentFT0M>;
   using BinningTypePbPb = ColumnBinningPolicy<aod::collision::PosZ, aod::cent::CentFT0C>;
@@ -307,6 +314,7 @@ struct HStrangeCorrelation {
     }
 
     hEfficiencyTrigger = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyTrigger"));
+    hEfficiencyTriggerMult = static_cast<TH3F*>(listEfficiencies->FindObject("hEfficiencyTriggerMult"));
     hEfficiencyK0Short = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyK0Short"));
     hEfficiencyLambda = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyLambda"));
     hEfficiencyAntiLambda = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyAntiLambda"));
@@ -315,9 +323,12 @@ struct HStrangeCorrelation {
     hEfficiencyOmegaMinus = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyOmegaMinus"));
     hEfficiencyOmegaPlus = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyOmegaPlus"));
     hEfficiencyHadron = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyHadron"));
+    hEfficiencyHadronMult = static_cast<TH3F*>(listEfficiencies->FindObject("hEfficiencyHadronMult"));
     hEfficiencyPion = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyPion"));
     hPurityHadron = static_cast<TH1F*>(listEfficiencies->FindObject("hPurityHadron"));
+    hPurityHadronMult = static_cast<TH2F*>(listEfficiencies->FindObject("hPurityHadronMult"));
     hEfficiencyUncertaintyTrigger = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyUncertaintyTrigger"));
+    hEfficiencyUncertaintyTriggerMult = static_cast<TH3F*>(listEfficiencies->FindObject("hEfficiencyUncertaintyTriggerMult"));
     hEfficiencyUncertaintyK0Short = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyUncertaintyK0Short"));
     hEfficiencyUncertaintyLambda = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyUncertaintyLambda"));
     hEfficiencyUncertaintyAntiLambda = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyUncertaintyAntiLambda"));
@@ -327,7 +338,9 @@ struct HStrangeCorrelation {
     hEfficiencyUncertaintyOmegaPlus = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyUncertaintyOmegaPlus"));
     hEfficiencyUncertaintyPion = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyUncertaintyPion"));
     hEfficiencyUncertaintyHadron = static_cast<TH2F*>(listEfficiencies->FindObject("hEfficiencyUncertaintyHadron"));
+    hEfficiencyUncertaintyHadronMult = static_cast<TH3F*>(listEfficiencies->FindObject("hEfficiencyUncertaintyHadronMult"));
     hPurityUncertaintyHadron = static_cast<TH1F*>(listEfficiencies->FindObject("hPurityUncertaintyHadron"));
+    hPurityUncertaintyHadronMult = static_cast<TH2F*>(listEfficiencies->FindObject("hPurityUncertaintyHadronMult"));
     if (efficiencyFlags.applyEfficiencyPropagation && !hEfficiencyUncertaintyTrigger)
       LOG(fatal) << "Problem getting hEfficiencyUncertaintyTrigger!";
     LOG(info) << "Efficiencies now loaded for " << mRunNumber;
@@ -806,13 +819,28 @@ struct HStrangeCorrelation {
       float purityTriggErr = 0.0f;
       if (!mixing) {
         if (efficiencyFlags.applyEfficiencyForTrigger) {
-          efficiencyTrigg = hEfficiencyTrigger->Interpolate(trigg.pt(), trigg.eta());
-          if (efficiencyFlags.applyPurityTrigger)
-            purityTrigg = hPurityHadron->Interpolate(trigg.pt());
+          if (efficiencyFlags.applyEffAsFunctionOfMult) {
+            efficiencyTrigg = hEfficiencyTriggerMult->Interpolate(trigg.pt(), trigg.eta(), mult);
+          } else {
+            efficiencyTrigg = hEfficiencyTrigger->Interpolate(trigg.pt(), trigg.eta());
+          }
+          if (efficiencyFlags.applyPurityTrigger) {
+            if (efficiencyFlags.applyEffAsFunctionOfMult)
+              purityTrigg = hPurityHadronMult->Interpolate(trigg.pt(), mult);
+            else
+              purityTrigg = hPurityHadron->Interpolate(trigg.pt());
+          }
           if (efficiencyFlags.applyEfficiencyPropagation) {
-            efficiencyTriggError = hEfficiencyUncertaintyTrigger->Interpolate(trigg.pt(), trigg.eta());
-            if (efficiencyFlags.applyPurityTrigger)
-              purityTriggErr = hPurityUncertaintyHadron->Interpolate(trigg.pt());
+            if (efficiencyFlags.applyEffAsFunctionOfMult)
+              efficiencyTriggError = hEfficiencyUncertaintyTriggerMult->Interpolate(trigg.pt(), trigg.eta(), mult);
+            else
+              efficiencyTriggError = hEfficiencyUncertaintyTrigger->Interpolate(trigg.pt(), trigg.eta());
+            if (efficiencyFlags.applyPurityTrigger) {
+              if (efficiencyFlags.applyEffAsFunctionOfMult)
+                purityTriggErr = hPurityUncertaintyHadronMult->Interpolate(trigg.pt(), mult);
+              else
+                purityTriggErr = hPurityUncertaintyHadron->Interpolate(trigg.pt());
+            }
           }
           if (efficiencyTrigg == 0) { // check for zero efficiency, do not apply if the case
             efficiencyTrigg = 1;
@@ -830,7 +858,7 @@ struct HStrangeCorrelation {
         //---] syst cuts [---
         if (doPPAnalysis && (std::abs(assoc.dcapostopv()) < systCuts.dcapostopv ||
                              std::abs(assoc.dcanegtopv()) < systCuts.dcanegtopv ||
-                             assoc.dcabachtopv() < systCuts.cascDcabachtopv ||
+                             std::abs(assoc.dcabachtopv()) < systCuts.cascDcabachtopv ||
                              assoc.dcaV0daughters() > systCuts.dcaV0dau ||
                              assoc.dcacascdaughters() > systCuts.cascDcacascdau ||
                              assoc.v0cosPA(pvx, pvy, pvz) < systCuts.v0cospa ||
@@ -984,13 +1012,27 @@ struct HStrangeCorrelation {
       if (!mixing) {
 
         if (efficiencyFlags.applyEfficiencyForTrigger) {
-          efficiencyTrigger = hEfficiencyTrigger->Interpolate(trigg.pt(), trigg.eta());
-          if (efficiencyFlags.applyPurityTrigger)
-            purityTrigger = hPurityHadron->Interpolate(trigg.pt());
+          if (efficiencyFlags.applyEffAsFunctionOfMult)
+            efficiencyTrigger = hEfficiencyTriggerMult->Interpolate(trigg.pt(), trigg.eta(), mult);
+          else
+            efficiencyTrigger = hEfficiencyTrigger->Interpolate(trigg.pt(), trigg.eta());
+          if (efficiencyFlags.applyPurityTrigger) {
+            if (efficiencyFlags.applyEffAsFunctionOfMult)
+              purityTrigger = hPurityHadronMult->Interpolate(trigg.pt(), mult);
+            else
+              purityTrigger = hPurityHadron->Interpolate(trigg.pt());
+          }
           if (efficiencyFlags.applyEfficiencyPropagation) {
-            efficiencyTriggerError = hEfficiencyUncertaintyTrigger->Interpolate(trigg.pt(), trigg.eta());
-            if (efficiencyFlags.applyPurityTrigger)
-              purityTriggerError = hPurityUncertaintyHadron->Interpolate(trigg.pt());
+            if (efficiencyFlags.applyEffAsFunctionOfMult)
+              efficiencyTriggerError = hEfficiencyUncertaintyTriggerMult->Interpolate(trigg.pt(), trigg.eta(), mult);
+            else
+              efficiencyTriggerError = hEfficiencyUncertaintyTrigger->Interpolate(trigg.pt(), trigg.eta());
+            if (efficiencyFlags.applyPurityTrigger) {
+              if (efficiencyFlags.applyEffAsFunctionOfMult)
+                purityTriggerError = hPurityUncertaintyHadronMult->Interpolate(trigg.pt(), mult);
+              else
+                purityTriggerError = hPurityUncertaintyHadron->Interpolate(trigg.pt());
+            }
           }
           if (efficiencyTrigger == 0) { // check for zero efficiency, do not apply if the case
             efficiencyTrigger = 1;
@@ -1057,13 +1099,27 @@ struct HStrangeCorrelation {
             if (efficiencyFlags.applyEfficiencyPropagation)
               efficiencyUncertainty = hEfficiencyUncertaintyPion->Interpolate(ptassoc, assoc.eta());
           } else {
-            efficiency = hEfficiencyHadron->Interpolate(ptassoc, assoc.eta());
-            if (efficiencyFlags.applyPurityHadron)
-              purity = hPurityHadron->Interpolate(ptassoc);
+            if (efficiencyFlags.applyEffAsFunctionOfMult)
+              efficiency = hEfficiencyHadronMult->Interpolate(ptassoc, assoc.eta(), mult);
+            else
+              efficiency = hEfficiencyHadron->Interpolate(ptassoc, assoc.eta());
+            if (efficiencyFlags.applyPurityHadron) {
+              if (efficiencyFlags.applyEffAsFunctionOfMult)
+                purity = hPurityHadronMult->Interpolate(ptassoc, mult);
+              else
+                purity = hPurityHadron->Interpolate(ptassoc);
+            }
             if (efficiencyFlags.applyEfficiencyPropagation) {
-              efficiencyUncertainty = hEfficiencyUncertaintyHadron->Interpolate(ptassoc, assoc.eta());
-              if (efficiencyFlags.applyPurityHadron)
-                purityUncertainty = hPurityUncertaintyHadron->Interpolate(ptassoc);
+              if (efficiencyFlags.applyEffAsFunctionOfMult)
+                efficiencyUncertainty = hEfficiencyUncertaintyHadronMult->Interpolate(ptassoc, assoc.eta(), mult);
+              else
+                efficiencyUncertainty = hEfficiencyUncertaintyHadron->Interpolate(ptassoc, assoc.eta());
+              if (efficiencyFlags.applyPurityHadron) {
+                if (efficiencyFlags.applyEffAsFunctionOfMult)
+                  purityUncertainty = hPurityUncertaintyHadronMult->Interpolate(ptassoc, mult);
+                else
+                  purityUncertainty = hPurityUncertaintyHadron->Interpolate(ptassoc);
+              }
             }
           }
         }
@@ -1326,6 +1382,8 @@ struct HStrangeCorrelation {
     }
     if (doprocessSameEventHV0s || doprocessSameEventHCascades || doprocessSameEventHPions || doprocessSameEventHHadrons) {
       histos.add("hTriggerAllSelectedEtaVsPt", "hTriggerAllSelectedEtaVsPt", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
+      histos.add("hPositiveTriggerPrimaryEtaVsPt", "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
+      histos.add("hNegativeTriggerPrimaryEtaVsPt", "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
       // QA and THn Histograms
       histos.add("hTriggerPtResolution", ";p_{T}^{reconstructed} (GeV/c); p_{T}^{generated} (GeV/c)", kTH2F, {axesConfigurations.axisPtQA, axesConfigurations.axisPtQA});
       histos.add("hTriggerPrimaryEtaVsPt", "hTriggerPrimaryEtaVsPt", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
@@ -1361,14 +1419,15 @@ struct HStrangeCorrelation {
     bool hStrange = false;
     for (int i = 0; i < 9; i++) {
       if (TESTBIT(doCorrelation, i)) {
-        histos.add(fmt::format("h{}EtaVsPtVsPhi", kParticlenames[i]).c_str(), "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisPhi});
-        histos.add(fmt::format("h3d{}Spectrum", kParticlenames[i]).c_str(), fmt::format("h3d{}Spectrum", kParticlenames[i]).c_str(), kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisMult, axesConfigurations.axisMassNSigma});
-        histos.add(fmt::format("h3d{}SpectrumY", kParticlenames[i]).c_str(), fmt::format("h3d{}SpectrumY", kParticlenames[i]).c_str(), kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisMult, axesConfigurations.axisMassNSigma});
-        histos.add(fmt::format("sameEvent/Signal/{}", kParticlenames[i]).c_str(), "", kTHnF, {axisDeltaPhiNDim, axisDeltaEtaNDim, axisPtAssocNDim, axisPtTriggerNDim, axisVtxZNDim, axisMultNDim});
-        if (doDeltaPhiStarCheck) {
+        if (doFullCorrelationStudy)
+          histos.add(fmt::format("sameEvent/Signal/{}", kParticlenames[i]).c_str(), "", kTHnF, {axisDeltaPhiNDim, axisDeltaEtaNDim, axisPtAssocNDim, axisPtTriggerNDim, axisVtxZNDim, axisMultNDim});
+        if (doDeltaPhiStarCheck && doFullCorrelationStudy) {
           histos.add(fmt::format("sameEvent/Signal/{}DeltaPhiStar", kParticlenames[i]).c_str(), "", kTH3F, {{100, -0.3, 0.3}, {50, -0.05, 0.05}, {2, -1, 1}}); // -1 oposite charge, 1 same charge
         }
         if (i < 7) {
+          histos.add(fmt::format("h{}EtaVsPtVsPhi", kParticlenames[i]).c_str(), "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisPhi});
+          histos.add(fmt::format("h3d{}Spectrum", kParticlenames[i]).c_str(), fmt::format("h3d{}Spectrum", kParticlenames[i]).c_str(), kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisMult, axesConfigurations.axisMassNSigma});
+          histos.add(fmt::format("h3d{}SpectrumY", kParticlenames[i]).c_str(), fmt::format("h3d{}SpectrumY", kParticlenames[i]).c_str(), kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisMult, axesConfigurations.axisMassNSigma});
           hStrange = true;
           histos.add(fmt::format("h{}EtaVsPtVsPhiBg", kParticlenames[i]).c_str(), "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisPhi});
           if (doITSClustersQA) {
@@ -1380,7 +1439,12 @@ struct HStrangeCorrelation {
         }
       }
     }
-
+    if (TESTBIT(doCorrelation, 7)) {
+      histos.add("hPionEtaVsPtAllSelected", "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
+      histos.add("hPionEtaVsPt", "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
+      histos.add("hPositivePionEtaVsPt", "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
+      histos.add("hNegativePionEtaVsPt", "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
+    }
     if (TESTBIT(doCorrelation, 8)) {
       histos.add("hAsssocTrackEtaVsPtVsPhi", "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisPhi});
       histos.add("hAssocPrimaryEtaVsPt", "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
@@ -1388,30 +1452,36 @@ struct HStrangeCorrelation {
       histos.add("hAssocPtResolution", ";p_{T}^{reconstructed} (GeV/c); p_{T}^{generated} (GeV/c)", kTH2F, {axesConfigurations.axisPtQA, axesConfigurations.axisPtQA});
     }
 
-    if (hStrange) {
+    if (hStrange && doFullCorrelationStudy) {
       histos.addClone("sameEvent/Signal/", "sameEvent/LeftBg/");
       histos.addClone("sameEvent/Signal/", "sameEvent/RightBg/");
     }
 
     LOGF(info, "Init THnFs done");
     // mixed-event correlation functions
-    if (doprocessMixedEventHV0s || doprocessMixedEventHCascades || doprocessMixedEventHPions || doprocessMixedEventHHadrons) {
+    if ((doprocessMixedEventHV0s || doprocessMixedEventHCascades || doprocessMixedEventHPions || doprocessMixedEventHHadrons) && doFullCorrelationStudy) {
       histos.addClone("sameEvent/", "mixedEvent/");
     }
-    if (doprocessSameEventHHadrons)
+    if (doprocessSameEventHHadrons && doFullCorrelationStudy)
       histos.add("sameEvent/TriggerParticlesHadron", "TriggersHadron", kTH2F, {axesConfigurations.axisPtQA, axesConfigurations.axisMult});
-    if (doprocessSameEventHV0s)
+    if (doprocessSameEventHV0s && doFullCorrelationStudy)
       histos.add("sameEvent/TriggerParticlesV0", "TriggersV0", kTH2F, {axesConfigurations.axisPtQA, axesConfigurations.axisMult});
-    if (doprocessSameEventHCascades)
+    if (doprocessSameEventHCascades && doFullCorrelationStudy)
       histos.add("sameEvent/TriggerParticlesCascade", "TriggersCascade", kTH2F, {axesConfigurations.axisPtQA, axesConfigurations.axisMult});
-    if (doprocessSameEventHPions)
+    if (doprocessSameEventHPions && doFullCorrelationStudy)
       histos.add("sameEvent/TriggerParticlesPion", "TriggersPion", kTH2F, {axesConfigurations.axisPtQA, axesConfigurations.axisMult});
 
     // MC generated plots
     if (doprocessMCGenerated) {
-      histos.add("Generated/hTrigger", "", kTH2F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta});
+      histos.add("Generated/hTrigger", "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
+      histos.add("Generated/hPositiveTrigger", "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
+      histos.add("Generated/hNegativeTrigger", "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
       for (int i = 0; i < 9; i++) {
-        histos.add(fmt::format("Generated/h{}", kParticlenames[i]).c_str(), "", kTH2F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta});
+        histos.add(fmt::format("Generated/h{}", kParticlenames[i]).c_str(), "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
+        if (i == 7) {
+          histos.add(fmt::format("Generated/hPositive{}", kParticlenames[i]).c_str(), "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
+          histos.add(fmt::format("Generated/hNegative{}", kParticlenames[i]).c_str(), "", kTH3F, {axesConfigurations.axisPtQA, axesConfigurations.axisEta, axesConfigurations.axisMult});
+        }
       }
       histos.addClone("Generated/", "GeneratedWithPV/");
 
@@ -1651,10 +1721,6 @@ struct HStrangeCorrelation {
     }
 
     // Do basic QA
-    for (auto const& hadron : assocHadrons) {
-      auto hadronTrack = hadron.track_as<TracksComplete>();
-      histos.fill(HIST("hHadronEtaVsPtVsPhi"), hadronTrack.pt(), hadronTrack.eta(), hadronTrack.phi());
-    }
     if (!doprocessSameEventHCascades && !doprocessSameEventHV0s && !doprocessSameEventHPions) {
       for (auto const& triggerTrack : triggerTracks) {
         auto track = triggerTrack.track_as<TracksComplete>();
@@ -1675,33 +1741,34 @@ struct HStrangeCorrelation {
         histos.fill(HIST("hTriggerPrimaryEtaVsPt"), track.pt(), track.eta(), collision.centFT0M());
         histos.fill(HIST("hTrackEtaVsPtVsPhi"), track.pt(), track.eta(), track.phi(), weight);
       }
-      for (auto const& assocTrack : assocHadrons) {
-        auto assoc = assocTrack.track_as<TracksComplete>();
-        if (!isValidAssocHadron(assoc))
-          continue;
-        float efficiency = 1.0f;
-        float purity = 1.0f;
-        if (efficiencyFlags.applyEfficiencyCorrection) {
-          efficiency = hEfficiencyHadron->Interpolate(assoc.pt(), assoc.eta());
-          if (efficiencyFlags.applyPurityHadron)
-            purity = hPurityHadron->Interpolate(assoc.pt());
-        }
-        if (efficiency == 0) { // check for zero efficiency, do not apply if the case
-          efficiency = 1;
-        }
-        float weight = efficiencyFlags.applyEfficiencyCorrection ? purity / efficiency : 1.0f;
-        histos.fill(HIST("hAssocHadronsAllSelectedEtaVsPt"), assoc.pt(), assoc.eta(), collision.centFT0M());
-        histos.fill(HIST("hAssocPtResolution"), assoc.pt(), assocTrack.mcOriginalPt());
-        if (doAssocPhysicalPrimary && !assocTrack.mcPhysicalPrimary())
-          continue;
-        histos.fill(HIST("hAssocPrimaryEtaVsPt"), assoc.pt(), assoc.eta(), collision.centFT0M());
-        histos.fill(HIST("hAsssocTrackEtaVsPtVsPhi"), assoc.pt(), assoc.eta(), assoc.phi(), weight);
+    }
+    for (auto const& assocTrack : assocHadrons) {
+      auto assoc = assocTrack.track_as<TracksComplete>();
+      if (!isValidAssocHadron(assoc))
+        continue;
+      float efficiency = 1.0f;
+      float purity = 1.0f;
+      if (efficiencyFlags.applyEfficiencyCorrection) {
+        efficiency = hEfficiencyHadron->Interpolate(assoc.pt(), assoc.eta());
+        if (efficiencyFlags.applyPurityHadron)
+          purity = hPurityHadron->Interpolate(assoc.pt());
       }
+      if (efficiency == 0) { // check for zero efficiency, do not apply if the case
+        efficiency = 1;
+      }
+      float weight = efficiencyFlags.applyEfficiencyCorrection ? purity / efficiency : 1.0f;
+      histos.fill(HIST("hAssocHadronsAllSelectedEtaVsPt"), assoc.pt(), assoc.eta(), collision.centFT0M(), weight);
+      histos.fill(HIST("hAssocPtResolution"), assoc.pt(), assocTrack.mcOriginalPt());
+      if (doAssocPhysicalPrimary && !assocTrack.mcPhysicalPrimary())
+        continue;
+      histos.fill(HIST("hAssocPrimaryEtaVsPt"), assoc.pt(), assoc.eta(), collision.centFT0M());
+      histos.fill(HIST("hAsssocTrackEtaVsPtVsPhi"), assoc.pt(), assoc.eta(), assoc.phi(), weight);
     }
 
     // ________________________________________________
     // Do hadron - hadron correlations
-    fillCorrelationsHadron(triggerTracks, assocHadrons, false, collision.posZ(), collision.centFT0M(), bField);
+    if (doFullCorrelationStudy)
+      fillCorrelationsHadron(triggerTracks, assocHadrons, false, collision.posZ(), collision.centFT0M(), bField);
   }
 
   void processSameEventHV0s(soa::Join<aod::Collisions, aod::EvSels, aod::CentFT0Ms, aod::CentFT0Cs, aod::PVMults>::iterator const& collision,
@@ -1801,7 +1868,8 @@ struct HStrangeCorrelation {
 
     // ________________________________________________
     // Do hadron - V0 correlations
-    fillCorrelationsV0(triggerTracks, associatedV0s, false, collision.posX(), collision.posY(), collision.posZ(), cent, bField);
+    if (doFullCorrelationStudy)
+      fillCorrelationsV0(triggerTracks, associatedV0s, false, collision.posX(), collision.posY(), collision.posZ(), cent, bField);
   }
 
   void processSameEventHCascades(soa::Join<aod::Collisions, aod::EvSels, aod::CentFT0Ms, aod::CentFT0Cs, aod::PVMults>::iterator const& collision,
@@ -1847,7 +1915,7 @@ struct HStrangeCorrelation {
       //---] syst cuts [---
       if (doPPAnalysis && (std::abs(cascData.dcapostopv()) < systCuts.dcapostopv ||
                            std::abs(cascData.dcanegtopv()) < systCuts.dcanegtopv ||
-                           cascData.dcabachtopv() < systCuts.cascDcabachtopv ||
+                           std::abs(cascData.dcabachtopv()) < systCuts.cascDcabachtopv ||
                            cascData.dcaV0daughters() > systCuts.dcaV0dau ||
                            cascData.dcacascdaughters() > systCuts.cascDcacascdau ||
                            cascData.v0cosPA(collision.posX(), collision.posY(), collision.posZ()) < systCuts.v0cospa ||
@@ -1901,12 +1969,17 @@ struct HStrangeCorrelation {
       if (doTriggPhysicalPrimary && !triggerTrack.mcPhysicalPrimary())
         continue;
       histos.fill(HIST("hTriggerPrimaryEtaVsPt"), track.pt(), track.eta(), cent);
+      if (track.sign() > 0)
+        histos.fill(HIST("hPositiveTriggerPrimaryEtaVsPt"), track.pt(), track.eta(), cent);
+      else
+        histos.fill(HIST("hNegativeTriggerPrimaryEtaVsPt"), track.pt(), track.eta(), cent);
       histos.fill(HIST("hTrackEtaVsPtVsPhi"), track.pt(), track.eta(), track.phi());
     }
 
     // ________________________________________________
     // Do hadron - cascade correlations
-    fillCorrelationsCascade(triggerTracks, associatedCascades, false, collision.posX(), collision.posY(), collision.posZ(), cent, bField);
+    if (doFullCorrelationStudy)
+      fillCorrelationsCascade(triggerTracks, associatedCascades, false, collision.posX(), collision.posY(), collision.posZ(), cent, bField);
   }
   void processSameEventHPions(soa::Join<aod::Collisions, aod::EvSels, aod::CentFT0Ms, aod::PVMults>::iterator const& collision,
                               soa::Join<aod::AssocHadrons, aod::AssocPID> const& associatedPions, soa::Join<aod::TriggerTracks, aod::TriggerTrackExtras> const& triggerTracks,
@@ -1938,7 +2011,19 @@ struct HStrangeCorrelation {
     // Do basic QA
     for (auto const& pion : associatedPions) {
       auto pionTrack = pion.track_as<TracksComplete>();
-      histos.fill(HIST("hPionEtaVsPtVsPhi"), pionTrack.pt(), pionTrack.eta(), pionTrack.phi());
+      if (!isValidAssocHadron(pionTrack))
+        continue;
+
+      histos.fill(HIST("hPionEtaVsPtAllSelected"), pionTrack.pt(), pionTrack.eta(), collision.centFT0M());
+      if (doAssocPhysicalPrimary && !pion.mcPhysicalPrimary())
+        continue;
+      if (doMCassociation && std::abs(pion.pdgCode()) != 211)
+        continue;
+      histos.fill(HIST("hPionEtaVsPt"), pionTrack.pt(), pionTrack.eta(), collision.centFT0M());
+      if (pionTrack.sign() > 0)
+        histos.fill(HIST("hPositivePionEtaVsPt"), pionTrack.pt(), pionTrack.eta(), collision.centFT0M());
+      else
+        histos.fill(HIST("hNegativePionEtaVsPt"), pionTrack.pt(), pionTrack.eta(), collision.centFT0M());
     }
     if (!doprocessSameEventHCascades && !doprocessSameEventHV0s) {
       for (auto const& triggerTrack : triggerTracks) {
@@ -1956,7 +2041,8 @@ struct HStrangeCorrelation {
 
     // ________________________________________________
     // Do hadron - Pion correlations
-    fillCorrelationsHadron(triggerTracks, associatedPions, false, collision.posZ(), collision.centFT0M(), bField);
+    if (doFullCorrelationStudy)
+      fillCorrelationsHadron(triggerTracks, associatedPions, false, collision.posZ(), collision.centFT0M(), bField);
   }
 
   void processMixedEventHHadrons(soa::Join<aod::Collisions, aod::EvSels, aod::CentFT0Ms, aod::PVMults> const& collisions,
@@ -1999,7 +2085,8 @@ struct HStrangeCorrelation {
       auto slicedAssocHadrons = assocHadrons.sliceBy(collisionSliceHadrons, collision2.globalIndex());
       // ________________________________________________
       // Do hadron - hadron correlations
-      fillCorrelationsHadron(slicedTriggerTracks, slicedAssocHadrons, true, collision1.posZ(), collision1.centFT0M(), bField);
+      if (doFullCorrelationStudy)
+        fillCorrelationsHadron(slicedTriggerTracks, slicedAssocHadrons, true, collision1.posZ(), collision1.centFT0M(), bField);
     }
   }
 
@@ -2048,7 +2135,8 @@ struct HStrangeCorrelation {
       auto slicedAssocV0s = associatedV0s.sliceBy(collisionSliceV0s, collision2.globalIndex());
       // ________________________________________________
       // Do hadron - V0 correlations
-      fillCorrelationsV0(slicedTriggerTracks, slicedAssocV0s, true, collision1.posX(), collision1.posY(), collision1.posZ(), cent1, bField);
+      if (doFullCorrelationStudy)
+        fillCorrelationsV0(slicedTriggerTracks, slicedAssocV0s, true, collision1.posX(), collision1.posY(), collision1.posZ(), cent1, bField);
     }
   }
   void processMixedEventHCascades(soa::Join<aod::Collisions, aod::EvSels, aod::CentFT0Ms, aod::CentFT0Cs, aod::PVMults> const& collisions,
@@ -2095,7 +2183,8 @@ struct HStrangeCorrelation {
       auto slicedAssocCascades = associatedCascades.sliceBy(collisionSliceCascades, collision2.globalIndex());
       // ________________________________________________
       // Do hadron - cascade correlations
-      fillCorrelationsCascade(slicedTriggerTracks, slicedAssocCascades, true, collision1.posX(), collision1.posY(), collision1.posZ(), cent1, bField);
+      if (doFullCorrelationStudy)
+        fillCorrelationsCascade(slicedTriggerTracks, slicedAssocCascades, true, collision1.posX(), collision1.posY(), collision1.posZ(), cent1, bField);
     }
   }
   void processMixedEventHPions(soa::Join<aod::Collisions, aod::EvSels, aod::CentFT0Ms, aod::PVMults> const& collisions,
@@ -2138,7 +2227,8 @@ struct HStrangeCorrelation {
       auto slicedAssocPions = assocPions.sliceBy(collisionSliceHadrons, collision2.globalIndex());
       // ________________________________________________
       // Do hadron - cascade correlations
-      fillCorrelationsHadron(slicedTriggerTracks, slicedAssocPions, true, collision1.posZ(), collision1.centFT0M(), bField);
+      if (doFullCorrelationStudy)
+        fillCorrelationsHadron(slicedTriggerTracks, slicedAssocPions, true, collision1.posZ(), collision1.centFT0M(), bField);
     }
   }
 
@@ -2171,11 +2261,16 @@ struct HStrangeCorrelation {
       static_for<0, 7>([&](auto i) {
         constexpr int Index = i.value;
         if (i == 0 || i == 7) {
-          if (std::abs(mcParticle.pdgCode()) == kPdgCodes[i])
-            histos.fill(HIST("Generated/h") + HIST(kParticlenames[Index]), mcParticle.pt(), mcParticle.eta());
+          if (std::abs(mcParticle.pdgCode()) == kPdgCodes[i]) {
+            histos.fill(HIST("Generated/h") + HIST(kParticlenames[Index]), mcParticle.pt(), mcParticle.eta(), 1);
+            if (i == 7 && mcParticle.pdgCode() > 0)
+              histos.fill(HIST("Generated/hPositive") + HIST(kParticlenames[Index]), mcParticle.pt(), mcParticle.eta(), 1);
+            else if (i == 7 && mcParticle.pdgCode() < 0)
+              histos.fill(HIST("Generated/hNegative") + HIST(kParticlenames[Index]), mcParticle.pt(), mcParticle.eta(), 1);
+          }
         } else {
           if (mcParticle.pdgCode() == kPdgCodes[i])
-            histos.fill(HIST("Generated/h") + HIST(kParticlenames[Index]), mcParticle.pt(), mcParticle.eta());
+            histos.fill(HIST("Generated/h") + HIST(kParticlenames[Index]), mcParticle.pt(), mcParticle.eta(), 1);
         }
       });
     }
@@ -2211,8 +2306,9 @@ struct HStrangeCorrelation {
         static_for<0, 7>([&](auto i) {
           constexpr int Index = i.value;
           if (i == 0 || i == 7) {
-            if (std::abs(mcParticle.pdgCode()) == kPdgCodes[i])
+            if (std::abs(mcParticle.pdgCode()) == kPdgCodes[i]) {
               histos.fill(HIST("GeneratedWithPV/h") + HIST(kParticlenames[Index]) + HIST("_MidYVsMult_TwoPVsOrMore"), mcParticle.pt(), bestCollisionFT0Mpercentile);
+            }
           } else {
             if (mcParticle.pdgCode() == kPdgCodes[i])
               histos.fill(HIST("GeneratedWithPV/h") + HIST(kParticlenames[Index]) + HIST("_MidYVsMult_TwoPVsOrMore"), mcParticle.pt(), bestCollisionFT0Mpercentile);
@@ -2264,8 +2360,14 @@ struct HStrangeCorrelation {
       }
       double geta = mcParticle.eta();
       double gpt = mcParticle.pt();
-      if (std::abs(mcParticle.pdgCode()) == PDG_t::kPiPlus || std::abs(mcParticle.pdgCode()) == PDG_t::kKPlus || std::abs(mcParticle.pdgCode()) == PDG_t::kProton || std::abs(mcParticle.pdgCode()) == PDG_t::kElectron || std::abs(mcParticle.pdgCode()) == PDG_t::kMuonMinus)
-        histos.fill(HIST("GeneratedWithPV/hTrigger"), gpt, geta);
+      if (std::abs(mcParticle.pdgCode()) == PDG_t::kPiPlus || std::abs(mcParticle.pdgCode()) == PDG_t::kKPlus || std::abs(mcParticle.pdgCode()) == PDG_t::kProton || std::abs(mcParticle.pdgCode()) == PDG_t::kElectron || std::abs(mcParticle.pdgCode()) == PDG_t::kMuonMinus) {
+        histos.fill(HIST("GeneratedWithPV/hTrigger"), gpt, geta, bestCollisionFT0Mpercentile);
+        if (mcParticle.pdgCode() > 0)
+          histos.fill(HIST("GeneratedWithPV/hPositiveTrigger"), gpt, geta, bestCollisionFT0Mpercentile);
+        else
+          histos.fill(HIST("GeneratedWithPV/hNegativeTrigger"), gpt, geta, bestCollisionFT0Mpercentile);
+      }
+
       if (mcParticle.pdgCode() == PDG_t::kLambda0 && !doAssocPhysicalPrimaryInGen && !mcParticle.isPhysicalPrimary()) {
         if (std::abs(geta) > etaSel) {
           continue;
@@ -2311,14 +2413,18 @@ struct HStrangeCorrelation {
         constexpr int Index = i.value;
         if (i == 0 || i == 7) {
           if (std::abs(mcParticle.pdgCode()) == kPdgCodes[i]) {
-            histos.fill(HIST("GeneratedWithPV/h") + HIST(kParticlenames[Index]), gpt, geta);
+            histos.fill(HIST("GeneratedWithPV/h") + HIST(kParticlenames[Index]), gpt, geta, bestCollisionFT0Mpercentile);
             if (std::abs(mcParticle.y()) < ySel)
               histos.fill(HIST("GeneratedWithPV/h") + HIST(kParticlenames[Index]) + HIST("_MidYVsMult"), gpt, bestCollisionFT0Mpercentile);
+            if (i == 7 && mcParticle.pdgCode() > 0)
+              histos.fill(HIST("GeneratedWithPV/hPositive") + HIST(kParticlenames[Index]), mcParticle.pt(), mcParticle.eta(), bestCollisionFT0Mpercentile);
+            else if (i == 7 && mcParticle.pdgCode() < 0)
+              histos.fill(HIST("GeneratedWithPV/hNegative") + HIST(kParticlenames[Index]), mcParticle.pt(), mcParticle.eta(), bestCollisionFT0Mpercentile);
           }
 
         } else {
           if (mcParticle.pdgCode() == kPdgCodes[i]) {
-            histos.fill(HIST("GeneratedWithPV/h") + HIST(kParticlenames[Index]), gpt, geta);
+            histos.fill(HIST("GeneratedWithPV/h") + HIST(kParticlenames[Index]), gpt, geta, bestCollisionFT0Mpercentile);
             if (std::abs(mcParticle.y()) < ySel)
               histos.fill(HIST("GeneratedWithPV/h") + HIST(kParticlenames[Index]) + HIST("_MidYVsMult"), gpt, bestCollisionFT0Mpercentile);
           }
@@ -2432,7 +2538,9 @@ struct HStrangeCorrelation {
         if (!doTriggPhysicalPrimary || mcParticle.isPhysicalPrimary()) {
           triggerIndices.emplace_back(iteratorNum);
           histos.fill(HIST("ClosureTest/hTrigger"), gpt, geta, bestCollisionFT0Mpercentile);
-          if (doCorrelationHadron) {
+        }
+        if (doCorrelationHadron) {
+          if (!doAssocPhysicalPrimary || mcParticle.isPhysicalPrimary()) {
             assocHadronIndices.emplace_back(iteratorNum);
             histos.fill(HIST("ClosureTest/hHadron"), gpt, geta, gphi);
           }
