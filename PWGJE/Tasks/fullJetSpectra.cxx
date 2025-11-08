@@ -1038,13 +1038,17 @@ struct FullJetSpectra {
       return;
     }
     for (auto bc : bcs) {
+      bool isEMCALBC = false;
+      if (bc.alias_bit(kTVXinEMC)) {
+        isEMCALBC = true;
+      }
       registry.fill(HIST("hBCCounter"), 0.5); // All BC
-      if (bc.selection_bit(aod::evsel::kIsTriggerTVX)) {
-        registry.fill(HIST("hBCCounter"), 1.5); // BC+TVX
+      if (bc.selection_bit(aod::evsel::kIsTriggerTVX) && isEMCALBC) {
+        registry.fill(HIST("hBCCounter"), 1.5); // BC+ kTVXinEMC
         if (bc.selection_bit(aod::evsel::kNoTimeFrameBorder)) {
-          registry.fill(HIST("hBCCounter"), 2.5); // BC+TVX+NoTFB
+          registry.fill(HIST("hBCCounter"), 2.5); // BC+kTVXinEMC+NoTFB
           if (bc.selection_bit(aod::evsel::kNoITSROFrameBorder)) {
-            registry.fill(HIST("hBCCounter"), 3.5); // BC+TVX+NoTFB+NoITSROFB ----> this goes to Lumi i.e. hLumiAfterBCcuts in eventSelection task
+            registry.fill(HIST("hBCCounter"), 3.5); // BC+kTVXinEMC+NoTFB+NoITSROFB ----> this goes to Lumi i.e. hLumiAfterBCcuts in eventSelection task
           }
         }
       }
